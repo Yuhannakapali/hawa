@@ -1,0 +1,20 @@
+{
+  "name": "@hawa/source",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {},
+  "dependencies": {},
+  "devDependencies": {
+    "@nx/js": "24.0.2",
+    "@swc/helpers": "~0.5.18",
+    "nx": "24.0.2",
+    "oxfmt": "^0.72.0",
+    "tslib": "^2.3.0",
+    "typescript": "~6.0.3"
+  },
+  "packageManager": "npm@11.16.0"
+}

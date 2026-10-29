@@ -1,0 +1,6 @@
+{
+  "name": "nx-installation",
+  "devDependencies": {
+    "nx": "24.0.2"
+  }
+}
