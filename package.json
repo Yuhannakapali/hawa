@@ -6,15 +6,23 @@
   "workspaces": [
     "packages/*"
   ],
-  "scripts": {},
-  "dependencies": {},
+  "scripts": {
+    "test": "nx run-many -t test",
+    "typecheck": "nx run-many -t typecheck",
+    "build": "nx run-many -t build"
+  },
   "devDependencies": {
     "@nx/js": "24.0.2",
+    "@nx/vitest": "24.0.2",
     "@swc/helpers": "~0.5.18",
+    "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "~5.0.1",
     "nx": "24.0.2",
     "oxfmt": "^0.72.0",
     "tslib": "^2.3.0",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vite": "^8.0.0",
+    "vitest": "~5.0.1"
   },
   "packageManager": "npm@11.16.0"
 }
