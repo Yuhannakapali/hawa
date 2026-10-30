@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>html,body{margin:0;height:100%;-webkit-font-smoothing:antialiased} a{color:inherit;text-decoration:underline;text-underline-offset:2px} a:hover{opacity:.8}</style>
+</helmet>
+<div style="height:{{ rootH }}; min-height:100%; display:flex; flex-direction:column; background:{{ t.bg }}; color:{{ t.ink }}; font-family:'Archivo', system-ui, sans-serif; font-size:16px; overflow:hidden; position:relative; box-sizing:border-box;">
+
+<sc-if value="{{ showStatus }}" hint-placeholder-val="{{ true }}">
+  <div style="height:32px; flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:0 26px; font-family:'IBM Plex Mono', monospace; font-size:13px; font-weight:600;">
+    <span>09:41</span>
+    <div style="width:24px; height:11px; border:1.5px solid {{ t.ink }}; border-radius:3px; padding:1px; box-sizing:border-box;"><div style="width:70%; height:100%; background:{{ t.ink }}; border-radius:1px;"></div></div>
+  </div>
+</sc-if>
+
+<!-- ============ TOP BARS ============ -->
+<sc-if value="{{ homeTop }}" hint-placeholder-val="{{ false }}">
+  <div style="flex-shrink:0; display:flex; flex-direction:column; gap:10px; padding:6px 12px 12px 20px; border-bottom:1px solid {{ t.line }};">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <div style="flex:1; display:flex; align-items:baseline; gap:10px;">
+        <span style="font-size:26px; font-weight:800; letter-spacing:-0.01em;">Hawa</span>
+        <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:{{ t.ink2 }};">{{ todayLabel }}</span>
+      </div>
+      <div onClick="{{ goSettings }}" aria-label="Settings" style="width:48px; height:48px; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; border:1px solid {{ t.line }}; background:{{ t.surf }}; box-sizing:border-box;">
+        <div style="width:18px; height:2px; background:{{ t.ink }}; border-radius:1px;"></div>
+        <div style="width:18px; height:2px; background:{{ t.ink }}; border-radius:1px;"></div>
+        <div style="width:18px; height:2px; background:{{ t.ink }}; border-radius:1px;"></div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:12px; padding-right:8px;">
+      <div style="display:flex; padding:3px; border-radius:12px; background:{{ t.surf2 }}; gap:3px;">
+        <sc-for list="{{ viewTabs }}" as="v" hint-placeholder-count="2">
+          <div onClick="{{ v.onPress }}" style="min-width:76px; height:40px; padding:0 14px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; cursor:pointer; background:{{ v.bg }}; color:{{ v.fg }}; box-sizing:border-box;">{{ v.label }}</div>
+        </sc-for>
+      </div>
+      <div style="flex:1; text-align:right; font-family:'IBM Plex Mono', monospace; font-size:13px; color:{{ t.ink2 }};">{{ updated }}</div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ backTop }}" hint-placeholder-val="{{ false }}">
+  <div style="flex-shrink:0; display:flex; align-items:center; gap:4px; padding:4px 8px; min-height:56px; border-bottom:1px solid {{ t.line }};">
+    <sc-if value="{{ showBack }}" hint-placeholder-val="{{ true }}">
+      <div onClick="{{ back.onPress }}" style="height:48px; padding:0 12px 0 6px; display:flex; align-items:center; gap:6px; cursor:pointer; font-size:16px; font-weight:600; border-radius:10px;">
+        <span style="font-size:28px; line-height:1; margin-top:-3px;">‹</span><span>{{ back.label }}</span>
+      </div>
+    </sc-if>
+    <div style="flex:1; font-size:17px; font-weight:700; text-align:center; padding-right:{{ back.padR }};">{{ back.title }}</div>
+    <sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ site.toggleStar }}" aria-label="Favorite" style="width:48px; height:48px; display:flex; align-items:center; justify-content:center; font-size:26px; cursor:pointer; color:{{ site.starC }};">{{ site.star }}</div>
+    </sc-if>
+  </div>
+</sc-if>
+
+<!-- ============ SHARED BANNERS ============ -->
+<sc-if value="{{ showOffline }}" hint-placeholder-val="{{ false }}">
+  <div role="status" style="flex-shrink:0; display:flex; align-items:center; gap:12px; padding:12px 20px; background:{{ t.surf2 }}; border-bottom:1px solid {{ t.line }};">
+    <div style="width:28px; height:28px; border-radius:14px; border:2px solid {{ t.ink }}; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-sizing:border-box;"><div style="width:14px; height:2px; background:{{ t.ink }}; transform:rotate(-45deg);"></div></div>
+    <div style="flex:1; font-size:15px; font-weight:600; line-height:1.3;">Offline — showing saved forecast from 09:31</div>
+  </div>
+</sc-if>
+<sc-if value="{{ showStale }}" hint-placeholder-val="{{ false }}">
+  <div role="alert" style="flex-shrink:0; display:flex; align-items:center; gap:12px; padding:12px 12px 12px 20px; background:{{ t.warnBg }}; color:{{ t.warnFg }};">
+    <div style="width:28px; height:28px; border-radius:6px; background:{{ yel.bg }}; color:{{ yel.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; flex-shrink:0;">!</div>
+    <div style="flex:1; display:flex; flex-direction:column; gap:2px;">
+      <div style="font-size:15px; font-weight:700;">Forecast may be out of date</div>
+      <div style="font-size:13px; line-height:1.3;">Last update 02:10 — more than 6 hours ago.</div>
+    </div>
+    <div onClick="{{ retry }}" style="height:44px; padding:0 14px; border-radius:10px; border:1.5px solid {{ t.warnFg }}; display:flex; align-items:center; font-size:14px; font-weight:700; cursor:pointer; box-sizing:border-box;">Refresh</div>
+  </div>
+</sc-if>
+
+<!-- ============ ONBOARDING ============ -->
+<sc-if value="{{ isOnb }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1; overflow:auto; display:flex; flex-direction:column; gap:24px; padding:20px 20px 24px;">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:22px; font-weight:800;">Hawa</span>
+      <span style="font-family:'IBM Plex Mono', monospace; font-size:13px; color:{{ t.ink2 }};">{{ onbCount }}</span>
+    </div>
+    <sc-if value="{{ onb1 }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div style="font-size:32px; font-weight:800; line-height:1.08; letter-spacing:-0.02em; text-wrap:pretty;">Flyable or not, hour by hour.</div>
+        <div style="font-size:16px; line-height:1.45; color:{{ t.ink2 }}; text-wrap:pretty;">Scores for 12 launch sites in Nepal, with the reason for every hour.</div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <sc-for list="{{ legend }}" as="l" hint-placeholder-count="3">
+          <div style="display:flex; align-items:center; gap:8px; height:36px; padding:0 12px 0 4px; border-radius:8px; background:{{ t.surf }}; border:1px solid {{ t.line }};">
+            <div style="width:28px; height:28px; border-radius:6px; background:{{ l.bg }}; color:{{ l.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:15px;">{{ l.g }}</div>
+            <span style="font-size:14px; font-weight:600;">{{ l.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="border:2px solid {{ t.ink }}; border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:6px; background:{{ t.surf }};">
+        <div style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;">Before you fly</div>
+        <div style="font-size:17px; font-weight:600; line-height:1.4;">The score is a guide only. You are responsible for the decision to fly.</div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">Your pilot level</div>
+        <sc-for list="{{ levelOpts }}" as="o" hint-placeholder-count="2">
+          <div onClick="{{ o.onPress }}" role="radio" style="display:flex; align-items:center; gap:14px; min-height:64px; padding:12px 16px; border-radius:12px; cursor:pointer; background:{{ t.surf }}; border:2px solid {{ o.bd }}; box-sizing:border-box;">
+            <div style="width:24px; height:24px; border-radius:12px; border:2px solid {{ t.ink }}; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-sizing:border-box;"><div style="width:12px; height:12px; border-radius:6px; background:{{ o.dot }};"></div></div>
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <div style="font-size:17px; font-weight:700;">{{ o.label }}</div>
+              <div style="font-size:14px; color:{{ t.ink2 }}; line-height:1.35;">{{ o.desc }}</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ onb2 }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div style="font-size:32px; font-weight:800; line-height:1.08; letter-spacing:-0.02em;">Evening alerts</div>
+        <div style="font-size:16px; line-height:1.45; color:{{ t.ink2 }}; text-wrap:pretty;">Get an alert at 19:00 when a favorite site is flyable tomorrow.</div>
+      </div>
+      <div style="border-radius:16px; padding:14px 16px; background:{{ t.surf }}; border:1px solid {{ t.line }}; display:flex; gap:12px; align-items:flex-start;">
+        <div style="width:36px; height:36px; border-radius:9px; background:{{ t.pri }}; color:{{ t.onPri }}; display:flex; align-items:center; justify-content:center; font-weight:800; flex-shrink:0;">H</div>
+        <div style="flex:1; display:flex; flex-direction:column; gap:3px;">
+          <div style="display:flex; justify-content:space-between; font-size:13px; color:{{ t.ink2 }};"><span>Hawa</span><span style="font-family:'IBM Plex Mono', monospace;">19:00</span></div>
+          <div style="font-size:15px; font-weight:700;">Bandipur is flyable tomorrow</div>
+          <div style="font-size:14px; color:{{ t.ink2 }};">Best window 06:00–12:00. Check the hourly score before you go.</div>
+        </div>
+      </div>
+      <div style="font-size:14px; color:{{ t.ink2 }}; line-height:1.4;">Only for your favorite sites. Change the time or turn alerts off in Settings.</div>
+    </sc-if>
+  </div>
+  <div style="flex-shrink:0; display:flex; flex-direction:column; gap:8px; padding:12px 20px 24px; border-top:1px solid {{ t.line }}; background:{{ t.bg }};">
+    <div onClick="{{ onbPrimary.onPress }}" style="height:56px; border-radius:14px; background:{{ t.pri }}; color:{{ t.onPri }}; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700; cursor:pointer;">{{ onbPrimary.label }}</div>
+    <sc-if value="{{ onb2 }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ finishOnb }}" style="height:52px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:600; cursor:pointer; color:{{ t.ink }};">Not now</div>
+    </sc-if>
+  </div>
+</sc-if>
+
+<!-- ============ HOME: LIST ============ -->
+<sc-if value="{{ isList }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1; overflow:auto; display:flex; flex-direction:column;">
+    <sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:16px 20px 8px; display:flex; flex-direction:column; gap:8px;"><div style="height:16px; width:55%; border-radius:4px; background:{{ t.skel }};"></div><div style="height:12px; width:35%; border-radius:4px; background:{{ t.skel }};"></div></div>
+      <sc-for list="{{ skel }}" as="k" hint-placeholder-count="8">
+        <div style="display:flex; align-items:center; gap:12px; min-height:72px; padding:0 16px 0 20px; border-bottom:1px solid {{ t.line }};">
+          <div style="width:22px; height:22px; border-radius:11px; background:{{ t.skel }};"></div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:8px;"><div style="height:16px; width:{{ k.w }}; border-radius:4px; background:{{ t.skel }};"></div><div style="height:12px; width:40%; border-radius:4px; background:{{ t.skel }};"></div></div>
+          <div style="width:44px; height:40px; border-radius:8px; background:{{ t.skel }};"></div>
+          <div style="width:44px; height:40px; border-radius:8px; background:{{ t.skel }};"></div>
+        </div>
+      </sc-for>
+    </sc-if>
+    <sc-if value="{{ error }}" hint-placeholder-val="{{ false }}">
+      <div role="alert" style="margin:24px 16px; padding:24px 20px; border-radius:14px; background:{{ t.surf }}; border:1px solid {{ t.line }}; display:flex; flex-direction:column; gap:12px; align-items:flex-start;">
+        <div style="width:40px; height:40px; border-radius:10px; background:{{ red.bg }}; color:{{ red.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:20px;">!</div>
+        <div style="font-size:20px; font-weight:700; line-height:1.25;">{{ errTitle }}</div>
+        <div style="font-size:15px; line-height:1.45; color:{{ t.ink2 }};">{{ errBody }}</div>
+        <div onClick="{{ retry }}" style="height:52px; padding:0 28px; border-radius:12px; background:{{ t.pri }}; color:{{ t.onPri }}; display:flex; align-items:center; font-size:16px; font-weight:700; cursor:pointer; margin-top:4px;">Retry</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ ok }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:16px 20px 6px; display:flex; flex-direction:column; gap:10px;">
+        <div style="font-size:19px; font-weight:700; line-height:1.25;">{{ summary }}</div>
+        <div style="display:flex; gap:14px; flex-wrap:wrap;">
+          <sc-for list="{{ legend }}" as="l" hint-placeholder-count="3">
+            <div style="display:flex; align-items:center; gap:6px;"><div style="width:20px; height:20px; border-radius:5px; background:{{ l.bg }}; color:{{ l.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px;">{{ l.g }}</div><span style="font-size:13px; color:{{ t.ink2 }};">{{ l.label }}</span></div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex; align-items:flex-end; padding:16px 36px 6px 20px; gap:8px; font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">
+        <span style="flex:1;">Favorites</span><span style="width:44px; text-align:center;">Today</span><span style="width:44px; text-align:center;">Tmrw</span>
+      </div>
+      <sc-if value="{{ favEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="margin:4px 16px 8px; padding:16px; border-radius:12px; border:1.5px dashed {{ t.ink3 }}; display:flex; gap:12px; align-items:flex-start;">
+          <div style="font-size:24px; line-height:1;">☆</div>
+          <div style="display:flex; flex-direction:column; gap:4px;">
+            <div style="font-size:16px; font-weight:700;">No favorites yet</div>
+            <div style="font-size:14px; line-height:1.4; color:{{ t.ink2 }};">Tap the star next to a site to pin it here. Favorites are saved for offline use and get evening alerts.</div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-for list="{{ favRows }}" as="r" hint-placeholder-count="3">
+        <div style="display:flex; align-items:center; min-height:72px; padding-right:12px; border-bottom:1px solid {{ t.line }}; background:{{ t.surf }};">
+          <div onClick="{{ r.toggle }}" aria-label="Favorite" style="width:52px; height:64px; display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; color:{{ r.starC }}; flex-shrink:0;">{{ r.star }}</div>
+          <div onClick="{{ r.open }}" style="flex:1; min-width:0; display:flex; align-items:center; gap:8px; cursor:pointer; min-height:64px;">
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;">
+              <div style="font-size:17px; font-weight:700;">{{ r.name }}</div>
+              <div style="font-family:'IBM Plex Mono', monospace; font-size:13px; color:{{ t.ink2 }};">{{ r.sub }}</div>
+            </div>
+            <div aria-label="{{ r.today.label }}" style="width:44px; height:40px; border-radius:8px; background:{{ r.today.bg }}; color:{{ r.today.fg }}; display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:800; flex-shrink:0;">{{ r.today.g }}</div>
+            <div aria-label="{{ r.tmrw.label }}" style="width:44px; height:40px; border-radius:8px; background:{{ r.tmrw.bg }}; color:{{ r.tmrw.fg }}; display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:800; flex-shrink:0;">{{ r.tmrw.g }}</div>
+            <span style="width:16px; font-size:22px; color:{{ t.ink3 }}; text-align:right;">›</span>
+          </div>
+        </div>
+      </sc-for>
+      <div style="display:flex; align-items:flex-end; padding:24px 36px 6px 20px; gap:8px; font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">
+        <span style="flex:1;">{{ allLabel }}</span><span style="width:44px; text-align:center;">Today</span><span style="width:44px; text-align:center;">Tmrw</span>
+      </div>
+      <sc-for list="{{ otherRows }}" as="r" hint-placeholder-count="9">
+        <div style="display:flex; align-items:center; min-height:72px; padding-right:12px; border-bottom:1px solid {{ t.line }}; background:{{ t.surf }};">
+          <div onClick="{{ r.toggle }}" aria-label="Favorite" style="width:52px; height:64px; display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; color:{{ r.starC }}; flex-shrink:0;">{{ r.star }}</div>
+          <div onClick="{{ r.open }}" style="flex:1; min-width:0; display:flex; align-items:center; gap:8px; cursor:pointer; min-height:64px;">
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:3px;">
+              <div style="font-size:17px; font-weight:700;">{{ r.name }}</div>
+              <div style="font-family:'IBM Plex Mono', monospace; font-size:13px; color:{{ t.ink2 }};">{{ r.sub }}</div>
+            </div>
+            <div aria-label="{{ r.today.label }}" style="width:44px; height:40px; border-radius:8px; background:{{ r.today.bg }}; color:{{ r.today.fg }}; display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:800; flex-shrink:0;">{{ r.today.g }}</div>
+            <div aria-label="{{ r.tmrw.label }}" style="width:44px; height:40px; border-radius:8px; background:{{ r.tmrw.bg }}; color:{{ r.tmrw.fg }}; display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:800; flex-shrink:0;">{{ r.tmrw.g }}</div>
+            <span style="width:16px; font-size:22px; color:{{ t.ink3 }}; text-align:right;">›</span>
+          </div>
+        </div>
+      </sc-for>
+      <div style="padding:16px 20px 28px; font-size:13px; color:{{ t.ink2 }}; line-height:1.5;">The score is a guide only. You are responsible for the decision to fly. Weather data by <a href="https://open-meteo.com" target="_blank">Open-Meteo.com</a> (CC BY 4.0).</div>
+    </sc-if>
+  </div>
+</sc-if>
+
+<!-- ============ HOME: MAP ============ -->
+<sc-if value="{{ isMap }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1; position:relative; overflow:hidden; background:repeating-linear-gradient(135deg, {{ t.map1 }} 0 14px, {{ t.map2 }} 14px 28px);">
+    <div style="position:absolute; left:16px; top:14px; font-family:'IBM Plex Mono', monospace; font-size:12px; color:{{ t.ink2 }}; background:{{ t.surf }}; padding:6px 8px; border-radius:6px; border:1px solid {{ t.line }};">MapLibre vector map · Nepal · today's score</div>
+    <sc-for list="{{ pins }}" as="p" hint-placeholder-count="12">
+      <div onClick="{{ p.onPress }}" style="position:absolute; left:{{ p.x }}; top:{{ p.y }}; z-index:{{ p.z }}; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer;">
+        <div aria-label="{{ p.label }}" style="width:36px; height:36px; border-radius:18px; background:{{ p.bg }}; color:{{ p.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px; border:3px solid {{ p.ring }}; box-sizing:border-box;">{{ p.g }}</div>
+        <sc-if value="{{ p.showName }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size:12px; font-weight:700; padding:2px 6px; border-radius:5px; background:{{ t.surf }}; color:{{ t.ink }}; white-space:nowrap;">{{ p.name }}</div>
+        </sc-if>
+      </div>
+    </sc-for>
+    <div style="position:absolute; left:12px; right:12px; bottom:12px; display:flex; flex-direction:column; gap:8px;">
+      <div style="align-self:flex-end; font-size:11px; color:{{ t.ink2 }}; background:{{ t.surf }}; padding:3px 6px; border-radius:4px;">© OpenStreetMap contributors · MapLibre</div>
+      <div style="padding:16px; border-radius:16px; background:{{ t.surf }}; border:1px solid {{ t.line }}; display:flex; flex-direction:column; gap:12px;">
+        <div style="display:flex; align-items:flex-start; gap:12px;">
+          <div style="flex:1; display:flex; flex-direction:column; gap:3px;">
+            <div style="font-size:19px; font-weight:700;">{{ mapSel.name }}</div>
+            <div style="font-family:'IBM Plex Mono', monospace; font-size:13px; color:{{ t.ink2 }};">{{ mapSel.sub }}</div>
+          </div>
+          <div onClick="{{ mapSel.toggle }}" style="width:44px; height:44px; display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; color:{{ mapSel.starC }};">{{ mapSel.star }}</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <div style="flex:1; display:flex; align-items:center; gap:8px; padding:8px; border-radius:10px; background:{{ mapSel.today.soft }};"><div style="width:28px; height:28px; border-radius:6px; background:{{ mapSel.today.bg }}; color:{{ mapSel.today.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800;">{{ mapSel.today.g }}</div><div style="display:flex; flex-direction:column;"><span style="font-size:12px; color:{{ t.ink2 }};">Today</span><span style="font-size:14px; font-weight:700; color:{{ t.ink }};">{{ mapSel.today.label }}</span></div></div>
+          <div style="flex:1; display:flex; align-items:center; gap:8px; padding:8px; border-radius:10px; background:{{ mapSel.tmrw.soft }};"><div style="width:28px; height:28px; border-radius:6px; background:{{ mapSel.tmrw.bg }}; color:{{ mapSel.tmrw.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800;">{{ mapSel.tmrw.g }}</div><div style="display:flex; flex-direction:column;"><span style="font-size:12px; color:{{ t.ink2 }};">Tomorrow</span><span style="font-size:14px; font-weight:700; color:{{ t.ink }};">{{ mapSel.tmrw.label }}</span></div></div>
+        </div>
+        <div onClick="{{ mapSel.open }}" style="height:52px; border-radius:12px; background:{{ t.pri }}; color:{{ t.onPri }}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; cursor:pointer;">Hourly score</div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- ============ SITE DETAIL ============ -->
+<sc-if value="{{ isDetail }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1; overflow:auto; display:flex; flex-direction:column;">
+    <div style="padding:16px 20px 12px; display:flex; flex-direction:column; gap:6px;">
+      <div style="font-size:32px; font-weight:800; letter-spacing:-0.02em; line-height:1.05;">{{ site.name }}</div>
+      <div style="font-family:'IBM Plex Mono', monospace; font-size:14px; color:{{ t.ink2 }};">{{ site.altLine }}</div>
+      <div style="font-size:15px; color:{{ t.ink2 }};">{{ site.notes }}</div>
+    </div>
+    <div onClick="{{ siteAlert.toggle }}" style="margin:0 16px; display:flex; align-items:center; gap:12px; min-height:56px; padding:6px 12px 6px 16px; border-radius:12px; background:{{ t.surf }}; border:1px solid {{ t.line }}; cursor:pointer;">
+      <div style="flex:1; display:flex; flex-direction:column; gap:2px;"><span style="font-size:15px; font-weight:600;">Alert for this site</span><span style="font-size:13px; color:{{ t.ink2 }};">{{ siteAlert.sub }}</span></div>
+      <div role="switch" style="width:52px; height:32px; border-radius:16px; background:{{ siteAlert.track }}; position:relative; flex-shrink:0;"><div style="position:absolute; top:3px; left:{{ siteAlert.knob }}; width:26px; height:26px; border-radius:13px; background:{{ siteAlert.knobC }};"></div></div>
+    </div>
+    <div style="display:flex; gap:8px; padding:16px 16px 4px;">
+      <sc-for list="{{ dayTabs }}" as="d" hint-placeholder-count="3">
+        <div onClick="{{ d.onPress }}" role="tab" style="flex:1; min-width:0; min-height:76px; padding:10px; border-radius:12px; display:flex; flex-direction:column; gap:6px; cursor:pointer; background:{{ d.bg }}; color:{{ d.fg }}; border:1px solid {{ d.bd }}; box-sizing:border-box;">
+          <div style="font-size:15px; font-weight:700;">{{ d.label }}</div>
+          <div style="display:flex; align-items:center; gap:6px;"><div style="width:22px; height:22px; border-radius:5px; background:{{ d.c.bg }}; color:{{ d.c.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; flex-shrink:0;">{{ d.c.g }}</div><span style="font-size:13px; font-weight:600; line-height:1.15;">{{ d.c.label }}</span></div>
+        </div>
+      </sc-for>
+    </div>
+    <sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}">
+      <div style="margin:12px 16px; height:76px; border-radius:12px; background:{{ t.skel }};"></div>
+      <div style="padding:0 16px; display:flex; flex-direction:column; gap:6px;">
+        <sc-for list="{{ skel }}" as="k" hint-placeholder-count="7">
+          <div style="display:flex; align-items:center; gap:12px; min-height:64px; padding:0 12px;">
+            <div style="width:46px; height:14px; border-radius:4px; background:{{ t.skel }};"></div>
+            <div style="width:36px; height:36px; border-radius:8px; background:{{ t.skel }};"></div>
+            <div style="flex:1; display:flex; flex-direction:column; gap:6px;"><div style="height:14px; width:{{ k.w }}; border-radius:4px; background:{{ t.skel }};"></div><div style="height:10px; width:30%; border-radius:4px; background:{{ t.skel }};"></div></div>
+            <div style="width:54px; height:28px; border-radius:6px; background:{{ t.skel }};"></div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{ error }}" hint-placeholder-val="{{ false }}">
+      <div role="alert" style="margin:16px; padding:24px 20px; border-radius:14px; background:{{ t.surf }}; border:1px solid {{ t.line }}; display:flex; flex-direction:column; gap:12px; align-items:flex-start;">
+        <div style="width:40px; height:40px; border-radius:10px; background:{{ red.bg }}; color:{{ red.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:20px;">!</div>
+        <div style="font-size:20px; font-weight:700; line-height:1.25;">{{ errTitle }}</div>
+        <div style="font-size:15px; line-height:1.45; color:{{ t.ink2 }};">{{ errBody }}</div>
+        <div onClick="{{ retry }}" style="height:52px; padding:0 28px; border-radius:12px; background:{{ t.pri }}; color:{{ t.onPri }}; display:flex; align-items:center; font-size:16px; font-weight:700; cursor:pointer; margin-top:4px;">Retry</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ ok }}" hint-placeholder-val="{{ true }}">
+      <div style="margin:12px 16px 0; padding:16px; border-radius:12px; background:{{ sum.c.soft }}; display:flex; gap:14px; align-items:flex-start;">
+        <div style="width:44px; height:44px; border-radius:10px; background:{{ sum.c.bg }}; color:{{ sum.c.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:22px; flex-shrink:0;">{{ sum.c.g }}</div>
+        <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+          <div style="font-size:18px; font-weight:700; line-height:1.25; color:{{ t.ink }};">{{ sum.title }}</div>
+          <div style="font-size:14px; line-height:1.4; color:{{ t.ink }};">{{ sum.body }}</div>
+        </div>
+      </div>
+      <sc-if value="{{ storm.on }}" hint-placeholder-val="{{ false }}">
+        <div role="alert" style="margin:12px 16px 0; padding:16px; border-radius:12px; background:{{ red.bg }}; color:{{ red.fg }}; display:flex; gap:14px; align-items:flex-start;">
+          <div style="width:44px; height:44px; border-radius:10px; border:2.5px solid {{ red.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:22px; flex-shrink:0; box-sizing:border-box;">ϟ</div>
+          <div style="flex:1; display:flex; flex-direction:column; gap:4px;">
+            <div style="font-size:18px; font-weight:800; line-height:1.25;">{{ storm.title }}</div>
+            <div style="font-size:14px; line-height:1.4;">{{ storm.body }}</div>
+          </div>
+        </div>
+      </sc-if>
+      <div style="display:flex; flex-wrap:wrap; gap:16px; padding:16px 16px 0; align-items:flex-start;">
+        <div style="flex:1 1 340px; min-width:0; display:flex; flex-direction:column; gap:2px;">
+          <div style="display:flex; justify-content:space-between; padding:0 4px 8px; font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};"><span>Hourly · Nepal time</span><span>Wind {{ su }}</span></div>
+          <sc-for list="{{ hours }}" as="h" hint-placeholder-count="7">
+            <div onClick="{{ h.onPress }}" style="display:flex; align-items:center; gap:12px; min-height:64px; padding:10px 12px; border-radius:10px; background:{{ h.bg }}; box-shadow:inset 0 0 0 2px {{ h.bd }}; cursor:pointer;">
+              <div style="width:48px; font-family:'IBM Plex Mono', monospace; font-size:15px; font-weight:600; flex-shrink:0;">{{ h.t }}</div>
+              <div aria-label="{{ h.c.label }}" style="width:36px; height:36px; border-radius:8px; background:{{ h.c.bg }}; color:{{ h.c.fg }}; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; flex-shrink:0;">{{ h.c.g }}</div>
+              <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;">
+                <div style="font-size:15px; font-weight:600; line-height:1.25; text-wrap:pretty;">{{ h.reason }}</div>
+                <div style="font-size:13px; color:{{ t.ink2 }};">{{ h.c.label }}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                <svg width="18" height="18" viewBox="0 0 18 18" style="transform:{{ h.rot }};"><path d="M9 2 V15 M4 10 L9 15 L14 10" fill="none" stroke="{{ t.ink }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                <div style="display:flex; flex-direction:column; align-items:flex-end; font-family:'IBM Plex Mono', monospace; min-width:44px;"><span style="font-size:16px; font-weight:600;">{{ h.w }}</span><span style="font-size:12px; color:{{ t.ink2 }};">G {{ h.g }}</span></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="flex:1 1 300px; min-width:0; display:flex; flex-direction:column; gap:12px;">
+          <div style="padding:16px; border-radius:14px; background:{{ t.surf }}; border:1px solid {{ t.line }}; display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline;"><span style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">Launch wind</span><span style="font-family:'IBM Plex Mono', monospace; font-size:15px; font-weight:600;">{{ sel.t }}</span></div>
+            <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+              <svg width="160" height="160" viewBox="0 0 200 200" role="img" aria-label="{{ sel.aria }}">
+                <circle cx="100" cy="100" r="72" fill="{{ t.surf2 }}" stroke="{{ t.line }}" stroke-width="2"></circle>
+                <path d="{{ cmp.sector }}" fill="{{ cmp.fill }}" stroke="{{ cmp.stroke }}" stroke-width="2.5"></path>
+                <text x="100" y="20" text-anchor="middle" font-family="IBM Plex Mono" font-size="15" font-weight="600" fill="{{ t.ink2 }}">N</text>
+                <text x="186" y="105" text-anchor="middle" font-family="IBM Plex Mono" font-size="15" font-weight="600" fill="{{ t.ink2 }}">E</text>
+                <text x="100" y="194" text-anchor="middle" font-family="IBM Plex Mono" font-size="15" font-weight="600" fill="{{ t.ink2 }}">S</text>
+                <text x="14" y="105" text-anchor="middle" font-family="IBM Plex Mono" font-size="15" font-weight="600" fill="{{ t.ink2 }}">W</text>
+                <g transform="{{ cmp.arrowT }}"><line x1="100" y1="36" x2="100" y2="146" stroke="{{ t.ink }}" stroke-width="5" stroke-linecap="round"></line><path d="M100 170 L87 144 L113 144 Z" fill="{{ t.ink }}"></path></g>
+                <circle cx="100" cy="100" r="6" fill="{{ t.surf }}" stroke="{{ t.ink }}" stroke-width="2.5"></circle>
+              </svg>
+              <div style="flex:1; min-width:120px; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; flex-direction:column;"><span style="font-family:'IBM Plex Mono', monospace; font-size:22px; font-weight:600;">{{ sel.w }} {{ su }}</span><span style="font-size:14px; color:{{ t.ink2 }};">Gust {{ sel.g }} {{ su }}</span></div>
+                <div style="font-size:14px; line-height:1.35;">From {{ sel.dir }}</div>
+                <div style="display:flex; align-items:center; gap:6px;"><div style="width:22px; height:22px; border-radius:5px; background:{{ sel.inC.bg }}; color:{{ sel.inC.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; flex-shrink:0;">{{ sel.inC.g }}</div><span style="font-size:13px; font-weight:600; line-height:1.25;">{{ sel.inText }}</span></div>
+              </div>
+            </div>
+            <div style="font-size:13px; color:{{ t.ink2 }};">Shaded: good wind sector {{ site.sector }}</div>
+          </div>
+          <div style="padding:16px; border-radius:14px; background:{{ t.surf }}; border:1px solid {{ t.line }}; display:flex; flex-direction:column; gap:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:baseline;"><span style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">Thermals</span><span style="font-family:'IBM Plex Mono', monospace; font-size:15px; font-weight:600;">{{ sel.t }}</span></div>
+            <div style="display:flex; gap:16px; flex-wrap:wrap;">
+              <div style="flex:1; min-width:120px; display:flex; flex-direction:column; gap:6px;">
+                <span style="font-size:13px; color:{{ t.ink2 }};">Thermal strength (CAPE)</span>
+                <span style="font-size:20px; font-weight:700;">{{ sel.cape }}</span>
+                <div style="display:flex; gap:4px;"><sc-for list="{{ capeSegs }}" as="cs" hint-placeholder-count="3"><div style="flex:1; height:8px; border-radius:2px; background:{{ cs.bg }};"></div></sc-for></div>
+              </div>
+              <div style="flex:1; min-width:120px; display:flex; flex-direction:column; gap:6px;">
+                <span style="font-size:13px; color:{{ t.ink2 }};">Cloud base (est.)</span>
+                <span style="font-family:'IBM Plex Mono', monospace; font-size:20px; font-weight:600;">{{ sel.cb }}</span>
+                <span style="font-size:13px; color:{{ t.ink2 }};">Wind at 2000 m: {{ sel.w2 }} {{ su }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:20px 20px 24px; font-size:13px; color:{{ t.ink2 }}; line-height:1.5;">Weather data by <a href="https://open-meteo.com" target="_blank">Open-Meteo.com</a> (CC BY 4.0). The score is a guide only.</div>
+    </sc-if>
+  </div>
+  <sc-if value="{{ ok }}" hint-placeholder-val="{{ true }}">
+    <div style="flex-shrink:0; padding:12px 16px 20px; border-top:1px solid {{ t.line }}; background:{{ t.bg }};">
+      <div onClick="{{ goWind }}" style="height:56px; border-radius:14px; background:{{ t.pri }}; color:{{ t.onPri }}; display:flex; align-items:center; justify-content:center; gap:10px; font-size:17px; font-weight:700; cursor:pointer;">Wind by height <span style="font-size:22px;">›</span></div>
+    </div>
+  </sc-if>
+</sc-if>
+
+<!-- ============ WIND BY HEIGHT ============ -->
+<sc-if value="{{ isWind }}" hint-placeholder-val="{{ false }}">
+  <div style="flex-shrink:0; display:flex; gap:8px; padding:12px 16px 8px;">
+    <sc-for list="{{ dayTabs }}" as="d" hint-placeholder-count="3">
+      <div onClick="{{ d.onPress }}" role="tab" style="flex:1; min-width:0; min-height:64px; padding:8px 10px; border-radius:12px; display:flex; flex-direction:column; gap:5px; cursor:pointer; background:{{ d.bg }}; color:{{ d.fg }}; border:1px solid {{ d.bd }}; box-sizing:border-box;">
+        <div style="font-size:15px; font-weight:700;">{{ d.label }}</div>
+        <div style="display:flex; align-items:center; gap:6px;"><div style="width:20px; height:20px; border-radius:5px; background:{{ d.c.bg }}; color:{{ d.c.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; flex-shrink:0;">{{ d.c.g }}</div><span style="font-size:12px; font-weight:600; line-height:1.15;">{{ d.c.label }}</span></div>
+      </div>
+    </sc-for>
+  </div>
+  <div style="flex-shrink:0; display:flex; align-items:center; gap:8px; padding:4px 20px 10px; font-size:13px; color:{{ t.ink2 }};">
+    <span style="padding:2px 6px; border-radius:4px; background:{{ red.soft }}; color:{{ red.ink }}; font-weight:800; font-family:'IBM Plex Mono', monospace;">▲ 32</span>
+    <span style="line-height:1.3;">{{ limitText }}</span>
+  </div>
+  <sc-if value="{{ loading }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1; padding:0 16px; display:flex; flex-direction:column; gap:6px;">
+      <sc-for list="{{ skel }}" as="k" hint-placeholder-count="8">
+        <div style="display:flex; gap:6px;"><div style="width:58px; height:44px; border-radius:6px; background:{{ t.skel }};"></div><div style="flex:1; height:44px; border-radius:6px; background:{{ t.skel }};"></div><div style="flex:1; height:44px; border-radius:6px; background:{{ t.skel }};"></div><div style="flex:1; height:44px; border-radius:6px; background:{{ t.skel }};"></div><div style="flex:1; height:44px; border-radius:6px; background:{{ t.skel }};"></div></div>
+      </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ error }}" hint-placeholder-val="{{ false }}">
+    <div role="alert" style="margin:16px; padding:24px 20px; border-radius:14px; background:{{ t.surf }}; border:1px solid {{ t.line }}; display:flex; flex-direction:column; gap:12px; align-items:flex-start;">
+      <div style="width:40px; height:40px; border-radius:10px; background:{{ red.bg }}; color:{{ red.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:20px;">!</div>
+      <div style="font-size:20px; font-weight:700; line-height:1.25;">{{ errTitle }}</div>
+      <div style="font-size:15px; line-height:1.45; color:{{ t.ink2 }};">{{ errBody }}</div>
+      <div onClick="{{ retry }}" style="height:52px; padding:0 28px; border-radius:12px; background:{{ t.pri }}; color:{{ t.onPri }}; display:flex; align-items:center; font-size:16px; font-weight:700; cursor:pointer; margin-top:4px;">Retry</div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ ok }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1; overflow:auto; position:relative; border-top:1px solid {{ t.line }};">
+      <div style="display:flex; position:sticky; top:0; z-index:2; background:{{ t.surf2 }}; border-bottom:2px solid {{ t.ink }}; min-width:max-content;">
+        <div style="width:64px; flex-shrink:0; position:sticky; left:0; z-index:3; background:{{ t.surf2 }}; padding:10px 0 10px 16px; font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; color:{{ t.ink2 }}; box-sizing:border-box;">NPT</div>
+        <sc-for list="{{ wCols }}" as="c" hint-placeholder-count="4">
+          <div style="width:76px; flex-shrink:0; padding:10px 4px; text-align:center; display:flex; flex-direction:column; gap:1px;"><span style="font-size:13px; font-weight:700;">{{ c.label }}</span><span style="font-size:11px; color:{{ t.ink2 }};">{{ c.sub }}</span></div>
+        </sc-for>
+      </div>
+      <sc-for list="{{ wRows }}" as="r" hint-placeholder-count="13">
+        <div style="display:flex; border-bottom:1px solid {{ t.line }}; min-width:max-content; background:{{ t.surf }};">
+          <div style="width:64px; flex-shrink:0; position:sticky; left:0; z-index:1; background:{{ t.surf }}; display:flex; align-items:center; gap:6px; padding-left:12px; box-sizing:border-box; border-right:1px solid {{ t.line }};">
+            <div style="width:6px; height:24px; border-radius:2px; background:{{ r.c.bg }};"></div>
+            <span style="font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:600;">{{ r.t }}</span>
+          </div>
+          <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="4">
+            <div style="width:76px; height:52px; flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:5px; background:{{ c.bg }}; color:{{ c.fg }}; font-family:'IBM Plex Mono', monospace; font-size:16px; font-weight:{{ c.fw }}; box-shadow:{{ c.sh }};">
+              <sc-if value="{{ c.over }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;">▲</span></sc-if>
+              <span>{{ c.v }}</span>
+              <svg width="14" height="14" viewBox="0 0 18 18" style="transform:{{ c.rot }};"><path d="M9 2 V15 M4 10 L9 15 L14 10" fill="none" stroke="{{ c.fg }}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+      <div style="padding:16px 20px 24px; font-size:13px; color:{{ t.ink2 }}; line-height:1.5;">Heights above sea level. Arrows show where the wind blows to. Weather data by <a href="https://open-meteo.com" target="_blank">Open-Meteo.com</a> (CC BY 4.0).</div>
+    </div>
+  </sc-if>
+</sc-if>
+
+<!-- ============ SETTINGS ============ -->
+<sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1; overflow:auto; display:flex; flex-direction:column; gap:24px; padding:20px 16px 28px;">
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="padding:0 4px; font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">Pilot level</div>
+      <sc-for list="{{ levelOpts }}" as="o" hint-placeholder-count="2">
+        <div onClick="{{ o.onPress }}" role="radio" style="display:flex; align-items:center; gap:14px; min-height:64px; padding:12px 16px; border-radius:12px; cursor:pointer; background:{{ t.surf }}; border:2px solid {{ o.bd }}; box-sizing:border-box;">
+          <div style="width:24px; height:24px; border-radius:12px; border:2px solid {{ t.ink }}; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-sizing:border-box;"><div style="width:12px; height:12px; border-radius:6px; background:{{ o.dot }};"></div></div>
+          <div style="display:flex; flex-direction:column; gap:2px;"><div style="font-size:17px; font-weight:700;">{{ o.label }}</div><div style="font-size:14px; color:{{ t.ink2 }}; line-height:1.35;">{{ o.desc }}</div></div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="padding:0 4px; font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">Alerts</div>
+      <div style="border-radius:12px; background:{{ t.surf }}; border:1px solid {{ t.line }}; display:flex; flex-direction:column;">
+        <div onClick="{{ notif.toggle }}" style="display:flex; align-items:center; gap:12px; min-height:60px; padding:8px 12px 8px 16px; cursor:pointer; border-bottom:1px solid {{ t.line }};">
+          <div style="flex:1; display:flex; flex-direction:column; gap:2px;"><span style="font-size:16px; font-weight:600;">Evening alert</span><span style="font-size:13px; color:{{ t.ink2 }}; line-height:1.3;">When a favorite site is flyable tomorrow</span></div>
+          <div role="switch" style="width:52px; height:32px; border-radius:16px; background:{{ notif.track }}; position:relative; flex-shrink:0;"><div style="position:absolute; top:3px; left:{{ notif.knob }}; width:26px; height:26px; border-radius:13px; background:{{ notif.knobC }};"></div></div>
+        </div>
+        <div onClick="{{ cycleAlert }}" style="display:flex; align-items:center; gap:12px; min-height:60px; padding:8px 16px; cursor:pointer;">
+          <span style="flex:1; font-size:16px; font-weight:600;">Alert time</span>
+          <span style="font-family:'IBM Plex Mono', monospace; font-size:17px; font-weight:600;">{{ alertTime }}</span>
+          <span style="font-size:22px; color:{{ t.ink3 }};">›</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="padding:0 4px; font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">Units</div>
+      <div style="border-radius:12px; background:{{ t.surf }}; border:1px solid {{ t.line }}; display:flex; flex-direction:column;">
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; min-height:64px; padding:8px 8px 8px 16px; border-bottom:1px solid {{ t.line }};">
+          <span style="flex:1; font-size:16px; font-weight:600;">Wind speed</span>
+          <div style="display:flex; padding:3px; gap:3px; border-radius:10px; background:{{ t.surf2 }};"><sc-for list="{{ unitOpts }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.onPress }}" style="min-width:64px; height:42px; padding:0 12px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; cursor:pointer; background:{{ o.bg }}; color:{{ o.fg }}; box-sizing:border-box;">{{ o.label }}</div></sc-for></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; min-height:64px; padding:8px 8px 8px 16px;">
+          <span style="flex:1; font-size:16px; font-weight:600;">Altitude</span>
+          <div style="display:flex; padding:3px; gap:3px; border-radius:10px; background:{{ t.surf2 }};"><sc-for list="{{ altOpts }}" as="o" hint-placeholder-count="2"><div onClick="{{ o.onPress }}" style="min-width:64px; height:42px; padding:0 12px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; cursor:pointer; background:{{ o.bg }}; color:{{ o.fg }}; box-sizing:border-box;">{{ o.label }}</div></sc-for></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="padding:0 4px; font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">Theme</div>
+      <div style="display:flex; padding:3px; gap:3px; border-radius:12px; background:{{ t.surf2 }};"><sc-for list="{{ themeOpts }}" as="o" hint-placeholder-count="3"><div onClick="{{ o.onPress }}" style="flex:1; height:46px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; cursor:pointer; background:{{ o.bg }}; color:{{ o.fg }};">{{ o.label }}</div></sc-for></div>
+    </div>
+    <div style="border:2px solid {{ t.ink }}; border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:6px; background:{{ t.surf }};">
+      <div style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;">Safety note</div>
+      <div style="font-size:16px; font-weight:600; line-height:1.4;">The score is a guide only. You are responsible for the decision to fly.</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="padding:0 4px; font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">Data &amp; credits</div>
+      <div style="border-radius:12px; background:{{ t.surf }}; border:1px solid {{ t.line }}; padding:4px 16px; display:flex; flex-direction:column;">
+        <div style="padding:12px 0; border-bottom:1px solid {{ t.line }}; font-size:15px; line-height:1.4;">Weather data by <a href="https://open-meteo.com" target="_blank">Open-Meteo.com</a>, licensed <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a></div>
+        <div style="padding:12px 0; border-bottom:1px solid {{ t.line }}; font-size:15px; line-height:1.4;">Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a> (ODbL). Rendered with MapLibre.</div>
+        <div style="padding:12px 0; font-size:15px; line-height:1.4; color:{{ t.ink2 }};">Free. No ads. No account. Version 0.1</div>
+      </div>
+    </div>
+  </div>
+</sc-if>
+
+<!-- ============ PUBLIC LANDING (web) ============ -->
+<sc-if value="{{ isLanding }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:1; overflow:auto; display:flex; flex-direction:column; align-items:center;">
+    <div style="width:100%; max-width:1120px; box-sizing:border-box; padding:20px 24px; display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-size:24px; font-weight:800;">Hawa</span>
+      <span style="font-family:'IBM Plex Mono', monospace; font-size:13px; color:{{ t.ink2 }};">Free · No ads · No account</span>
+    </div>
+    <div style="width:100%; max-width:1120px; box-sizing:border-box; padding:24px 24px 40px; display:flex; flex-wrap:wrap; gap:40px; align-items:flex-start;">
+      <div style="flex:1 1 400px; min-width:0; display:flex; flex-direction:column; gap:24px;">
+        <div style="font-size:clamp(36px, 6vw, 60px); font-weight:800; line-height:1.02; letter-spacing:-0.03em; text-wrap:pretty;">Which launch sites in Nepal are flyable today — and when.</div>
+        <div style="font-size:18px; line-height:1.5; color:{{ t.ink2 }}; max-width:520px; text-wrap:pretty;">Hourly scores for Sarangkot, Bandipur, Chandragiri and 9 more sites, from 06:00 to 18:00 Nepal time. Every hour shows the reason.</div>
+        <div style="display:flex; flex-direction:column; gap:10px; max-width:420px;">
+          <div onClick="{{ openApp }}" style="height:60px; border-radius:14px; background:{{ t.pri }}; color:{{ t.onPri }}; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; cursor:pointer;">Open the web app</div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div style="flex:1 1 180px; height:56px; border-radius:14px; border:2px solid {{ t.ink }}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; cursor:pointer; box-sizing:border-box;">Get it on Google Play</div>
+            <div style="flex:1 1 180px; height:56px; border-radius:14px; border:2px solid {{ t.ink }}; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; cursor:pointer; box-sizing:border-box;">Download on the App Store</div>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1 1 360px; min-width:0; display:flex; flex-direction:column; gap:10px;">
+        <sc-for list="{{ landingLegend }}" as="l" hint-placeholder-count="3">
+          <div style="display:flex; gap:14px; align-items:flex-start; padding:16px; border-radius:14px; background:{{ l.soft }};">
+            <div style="width:44px; height:44px; border-radius:10px; background:{{ l.bg }}; color:{{ l.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:22px; flex-shrink:0;">{{ l.g }}</div>
+            <div style="display:flex; flex-direction:column; gap:3px;"><span style="font-size:18px; font-weight:700; color:{{ t.ink }};">{{ l.label }}</span><span style="font-size:15px; line-height:1.4; color:{{ t.ink }};">{{ l.desc }}</span></div>
+          </div>
+        </sc-for>
+        <div style="border:2px solid {{ t.ink }}; border-radius:14px; padding:16px; display:flex; flex-direction:column; gap:6px; background:{{ t.surf }};">
+          <div style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;">Safety note</div>
+          <div style="font-size:17px; font-weight:600; line-height:1.4;">The score is a guide only. You are responsible for the decision to fly.</div>
+        </div>
+      </div>
+    </div>
+    <div style="width:100%; max-width:1120px; box-sizing:border-box; padding:20px 24px 32px; border-top:1px solid {{ t.line }}; font-size:13px; color:{{ t.ink2 }}; line-height:1.5;">Weather data by <a href="https://open-meteo.com" target="_blank">Open-Meteo.com</a> (CC BY 4.0). Map data © OpenStreetMap contributors.</div>
+  </div>
+</sc-if>
+
+<!-- ============ COMPONENT SHEET ============ -->
+<sc-if value="{{ isSheet }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex; flex-direction:column; gap:28px; padding:24px 20px 32px;">
+    <div style="display:flex; flex-direction:column; gap:4px;"><span style="font-size:24px; font-weight:800;">Components</span><span style="font-family:'IBM Plex Mono', monospace; font-size:13px; color:{{ t.ink2 }};">{{ themeName }} theme</span></div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">RatingChip · compact / label / soft</div>
+      <sc-for list="{{ legend }}" as="l" hint-placeholder-count="3">
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+          <div style="width:44px; height:40px; border-radius:8px; background:{{ l.bg }}; color:{{ l.fg }}; display:flex; align-items:center; justify-content:center; font-size:19px; font-weight:800;">{{ l.g }}</div>
+          <div style="height:32px; padding:0 12px 0 8px; border-radius:8px; background:{{ l.bg }}; color:{{ l.fg }}; display:flex; align-items:center; gap:6px; font-size:14px; font-weight:700;"><span style="font-weight:800;">{{ l.g }}</span>{{ l.label }}</div>
+          <div style="height:32px; padding:0 12px 0 4px; border-radius:8px; background:{{ l.soft }}; color:{{ t.ink }}; display:flex; align-items:center; gap:8px; font-size:14px; font-weight:600;"><div style="width:24px; height:24px; border-radius:5px; background:{{ l.bg }}; color:{{ l.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px;">{{ l.g }}</div>{{ l.label }}</div>
+        </div>
+      </sc-for>
+      <div style="font-size:13px; color:{{ t.ink2 }}; line-height:1.4;">Glyph + label always paired with color: ✓ Flyable · ! Marginal · ✕ Not flyable · – Not saved</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <div style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">HourCell · default / selected</div>
+      <sc-for list="{{ sheetHours }}" as="h" hint-placeholder-count="4">
+        <div style="display:flex; align-items:center; gap:12px; min-height:64px; padding:10px 12px; border-radius:10px; background:{{ h.bg }}; box-shadow:inset 0 0 0 2px {{ h.bd }};">
+          <div style="width:48px; font-family:'IBM Plex Mono', monospace; font-size:15px; font-weight:600; flex-shrink:0;">{{ h.t }}</div>
+          <div style="width:36px; height:36px; border-radius:8px; background:{{ h.c.bg }}; color:{{ h.c.fg }}; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; flex-shrink:0;">{{ h.c.g }}</div>
+          <div style="flex:1; min-width:0; display:flex; flex-direction:column; gap:2px;"><div style="font-size:15px; font-weight:600; line-height:1.25;">{{ h.reason }}</div><div style="font-size:13px; color:{{ t.ink2 }};">{{ h.c.label }}</div></div>
+          <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+            <svg width="18" height="18" viewBox="0 0 18 18" style="transform:{{ h.rot }};"><path d="M9 2 V15 M4 10 L9 15 L14 10" fill="none" stroke="{{ t.ink }}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; font-family:'IBM Plex Mono', monospace; min-width:44px;"><span style="font-size:16px; font-weight:600;">{{ h.w }}</span><span style="font-size:12px; color:{{ t.ink2 }};">G {{ h.g }}</span></div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">WindCompass · sector 135°–225°, wind 240°</div>
+      <div style="display:flex; gap:16px; align-items:center;">
+        <svg width="160" height="160" viewBox="0 0 200 200">
+          <circle cx="100" cy="100" r="72" fill="{{ t.surf2 }}" stroke="{{ t.line }}" stroke-width="2"></circle>
+          <path d="{{ cmp.sector }}" fill="{{ cmp.fill }}" stroke="{{ cmp.stroke }}" stroke-width="2.5"></path>
+          <text x="100" y="20" text-anchor="middle" font-family="IBM Plex Mono" font-size="15" font-weight="600" fill="{{ t.ink2 }}">N</text>
+          <text x="186" y="105" text-anchor="middle" font-family="IBM Plex Mono" font-size="15" font-weight="600" fill="{{ t.ink2 }}">E</text>
+          <text x="100" y="194" text-anchor="middle" font-family="IBM Plex Mono" font-size="15" font-weight="600" fill="{{ t.ink2 }}">S</text>
+          <text x="14" y="105" text-anchor="middle" font-family="IBM Plex Mono" font-size="15" font-weight="600" fill="{{ t.ink2 }}">W</text>
+          <g transform="rotate(240 100 100)"><line x1="100" y1="36" x2="100" y2="146" stroke="{{ t.ink }}" stroke-width="5" stroke-linecap="round"></line><path d="M100 170 L87 144 L113 144 Z" fill="{{ t.ink }}"></path></g>
+          <circle cx="100" cy="100" r="6" fill="{{ t.surf }}" stroke="{{ t.ink }}" stroke-width="2.5"></circle>
+        </svg>
+        <div style="font-size:13px; line-height:1.45; color:{{ t.ink2 }};">Props: sector[], dirDeg, size. Arrow tail = where wind comes from. Shaded wedge = good launch sector.</div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">WindHeightCell · normal / above limit</div>
+      <div style="display:flex; gap:0; border:1px solid {{ t.line }}; border-radius:8px; overflow:hidden; align-self:flex-start;">
+        <div style="width:76px; height:52px; display:flex; align-items:center; justify-content:center; gap:5px; background:{{ t.surf }}; font-family:'IBM Plex Mono', monospace; font-size:16px; font-weight:500;"><span>14</span><svg width="14" height="14" viewBox="0 0 18 18" style="transform:rotate(200deg);"><path d="M9 2 V15 M4 10 L9 15 L14 10" fill="none" stroke="{{ t.ink }}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div style="width:76px; height:52px; display:flex; align-items:center; justify-content:center; gap:5px; background:{{ red.soft }}; color:{{ red.ink }}; font-family:'IBM Plex Mono', monospace; font-size:16px; font-weight:700; box-shadow:inset 0 0 0 2px {{ red.ink }};"><span style="font-size:11px;">▲</span><span>34</span><svg width="14" height="14" viewBox="0 0 18 18" style="transform:rotate(250deg);"><path d="M9 2 V15 M4 10 L9 15 L14 10" fill="none" stroke="{{ red.ink }}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div style="width:76px; height:52px; display:flex; align-items:center; justify-content:center; background:{{ t.surf }};"><div style="width:44px; height:16px; border-radius:4px; background:{{ t.skel }};"></div></div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">Banner · offline / stale · ErrorCard</div>
+      <div style="display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:10px; background:{{ t.surf2 }};">
+        <div style="width:28px; height:28px; border-radius:14px; border:2px solid {{ t.ink }}; display:flex; align-items:center; justify-content:center; flex-shrink:0; box-sizing:border-box;"><div style="width:14px; height:2px; background:{{ t.ink }}; transform:rotate(-45deg);"></div></div>
+        <div style="flex:1; font-size:15px; font-weight:600;">Offline — showing saved forecast from 09:31</div>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px; padding:12px 12px 12px 16px; border-radius:10px; background:{{ t.warnBg }}; color:{{ t.warnFg }};">
+        <div style="width:28px; height:28px; border-radius:6px; background:{{ yel.bg }}; color:{{ yel.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; flex-shrink:0;">!</div>
+        <div style="flex:1; font-size:15px; font-weight:700;">Forecast may be out of date</div>
+        <div style="height:44px; padding:0 14px; border-radius:10px; border:1.5px solid {{ t.warnFg }}; display:flex; align-items:center; font-size:14px; font-weight:700; box-sizing:border-box;">Refresh</div>
+      </div>
+      <div style="padding:16px; border-radius:12px; background:{{ red.bg }}; color:{{ red.fg }}; display:flex; gap:12px; align-items:center;">
+        <div style="width:36px; height:36px; border-radius:9px; border:2.5px solid {{ red.fg }}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:18px; box-sizing:border-box;">ϟ</div>
+        <div style="font-size:16px; font-weight:800;">Storm risk from 14:00</div>
+      </div>
+      <div style="padding:16px; border-radius:12px; background:{{ t.surf }}; border:1px solid {{ t.line }}; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div style="flex:1; min-width:160px; font-size:15px; font-weight:700;">Server error, please try again later</div>
+        <div style="height:48px; padding:0 22px; border-radius:12px; background:{{ t.pri }}; color:{{ t.onPri }}; display:flex; align-items:center; font-weight:700;">Retry</div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">Controls · Button / Segmented / Switch / Star</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <div style="height:56px; padding:0 24px; border-radius:14px; background:{{ t.pri }}; color:{{ t.onPri }}; display:flex; align-items:center; font-size:17px; font-weight:700;">Primary</div>
+        <div style="height:56px; padding:0 22px; border-radius:14px; border:2px solid {{ t.ink }}; display:flex; align-items:center; font-size:16px; font-weight:700; box-sizing:border-box;">Secondary</div>
+        <div style="width:52px; height:32px; border-radius:16px; background:{{ t.pri }}; position:relative;"><div style="position:absolute; top:3px; left:23px; width:26px; height:26px; border-radius:13px; background:{{ t.onPri }};"></div></div>
+        <div style="width:52px; height:32px; border-radius:16px; background:{{ t.ink3 }}; position:relative;"><div style="position:absolute; top:3px; left:3px; width:26px; height:26px; border-radius:13px; background:{{ t.surf }};"></div></div>
+        <span style="font-size:26px; width:48px; text-align:center;">★</span><span style="font-size:26px; width:48px; text-align:center; color:{{ t.ink3 }};">☆</span>
+      </div>
+      <div style="display:flex; padding:3px; gap:3px; border-radius:12px; background:{{ t.surf2 }}; align-self:flex-start;"><div style="min-width:76px; height:40px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-weight:700; background:{{ t.pri }}; color:{{ t.onPri }};">List</div><div style="min-width:76px; height:40px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-weight:700;">Map</div></div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">Color tokens</div>
+      <div style="display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px;">
+        <sc-for list="{{ colorTokens }}" as="c" hint-placeholder-count="16">
+          <div style="display:flex; align-items:center; gap:8px; min-width:0;"><div style="width:32px; height:32px; border-radius:6px; background:{{ c.v }}; border:1px solid {{ t.line }}; flex-shrink:0;"></div><div style="display:flex; flex-direction:column; min-width:0;"><span style="font-size:13px; font-weight:600;">{{ c.n }}</span><span style="font-family:'IBM Plex Mono', monospace; font-size:11px; color:{{ t.ink2 }};">{{ c.v }}</span></div></div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <div style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">Spacing · radius</div>
+      <sc-for list="{{ spaceTokens }}" as="s" hint-placeholder-count="7">
+        <div style="display:flex; align-items:center; gap:12px;"><span style="width:64px; font-family:'IBM Plex Mono', monospace; font-size:12px;">{{ s.n }}</span><div style="height:12px; width:{{ s.w }}; background:{{ t.ink }}; border-radius:2px;"></div><span style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:{{ t.ink2 }};">{{ s.v }}</span></div>
+      </sc-for>
+      <div style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:{{ t.ink2 }};">radius sm 6 · md 10 · lg 14 · pill 16 — min tap target 48</div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:8px;">
+      <div style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:{{ t.ink2 }};">Type · Archivo + IBM Plex Mono</div>
+      <div style="font-size:32px; font-weight:800; letter-spacing:-0.02em;">display 32/800</div>
+      <div style="font-size:20px; font-weight:700;">title 20/700</div>
+      <div style="font-size:17px; font-weight:700;">rowTitle 17/700</div>
+      <div style="font-size:16px;">body 16/400 — Gusts too strong</div>
+      <div style="font-size:13px; color:{{ t.ink2 }};">caption 13/500</div>
+      <div style="font-family:'IBM Plex Mono', monospace; font-size:16px; font-weight:600;">data 16/600 — 12:00 · 18 km/h</div>
+      <div style="font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;">overline 12/600</div>
+    </div>
+  </div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;onboarding&quot;,&quot;home&quot;,&quot;detail&quot;,&quot;wind&quot;,&quot;settings&quot;,&quot;landing&quot;,&quot;sheet&quot;],&quot;default&quot;:&quot;home&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;ok&quot;,&quot;loading&quot;,&quot;error&quot;,&quot;offline&quot;,&quot;stale&quot;,&quot;empty&quot;],&quot;default&quot;:&quot;ok&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;,&quot;system&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;level&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;pilot&quot;,&quot;student&quot;],&quot;default&quot;:&quot;pilot&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;view&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;list&quot;,&quot;map&quot;],&quot;default&quot;:&quot;list&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;day&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;min&quot;:0,&quot;max&quot;:2,&quot;tsType&quot;:&quot;number&quot;},&quot;step&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:1,&quot;min&quot;:1,&quot;max&quot;:2,&quot;tsType&quot;:&quot;number&quot;},&quot;desktop&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;hideTop&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;rootH&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;string&quot;}}">
+const T = {
+  light: { bg:'#F4F5F6', surf:'#FFFFFF', surf2:'#E8EBED', ink:'#0D1012', ink2:'#4A535B', ink3:'#69727A', line:'#D3D8DC', pri:'#12171B', onPri:'#FFFFFF', skel:'#DFE3E6', map1:'#E4E8E5', map2:'#DADFDB', warnBg:'#12171B', warnFg:'#FFFFFF' },
+  dark:  { bg:'#08090A', surf:'#121416', surf2:'#1C1F22', ink:'#F3F5F6', ink2:'#B0B8BF', ink3:'#8E979F', line:'#2B3034', pri:'#F3F5F6', onPri:'#08090A', skel:'#22262A', map1:'#121614', map2:'#181D1A', warnBg:'#F3F5F6', warnFg:'#08090A' }
+};
+const RT = {
+  light: { green:{s:'#1E7B43',on:'#FFFFFF',soft:'#E2F1E7',ink:'#17633A'}, yellow:{s:'#F0C12E',on:'#1B1600',soft:'#FBF0CC',ink:'#6E5200'}, red:{s:'#C42B23',on:'#FFFFFF',soft:'#FADFDC',ink:'#A8231C'}, none:{s:'#E8EBED',on:'#4A535B',soft:'#F4F5F6',ink:'#4A535B'} },
+  dark:  { green:{s:'#46C277',on:'#04120A',soft:'#10261A',ink:'#6FD898'}, yellow:{s:'#F2C94C',on:'#1B1600',soft:'#2B2410',ink:'#F2C94C'}, red:{s:'#FF6E61',on:'#1A0503',soft:'#341613',ink:'#FF8C81'}, none:{s:'#1C1F22',on:'#B0B8BF',soft:'#121416',ink:'#B0B8BF'} }
+};
+const RL = { green:{g:'✓',label:'Flyable'}, yellow:{g:'!',label:'Marginal'}, red:{g:'✕',label:'Not flyable'}, none:{g:'–',label:'Not saved'} };
+const REASON = { 'launch-wind':'Wind too strong at launch', 'gust-spread':'Gusts too strong', 'wind-direction':'Wind from the wrong direction', 'wind-2000m':'Strong wind at 2000 m', 'rain':'Rain', 'storm-risk':'Storm risk', 'light-wind':'Light wind — forward launch may be harder' };
+const SITES = [
+  {id:'sarangkot',name:'Sarangkot',region:'Pokhara',alt:1590,land:800,sec:[135,225],notes:'Landing at Phewa Lake',lat:28.244,lon:83.949,d:['red','red','yellow']},
+  {id:'kahun',name:'Kahun Danda',region:'Pokhara',alt:1560,land:830,sec:[180,260],notes:'Landing in the Kahun Khola fields',lat:28.25,lon:84.03,d:['yellow','red','yellow']},
+  {id:'naudanda',name:'Naudanda',region:'Kaski',alt:1430,land:900,sec:[150,230],notes:'Small launch, one wing at a time',lat:28.30,lon:83.80,d:['green','yellow','yellow']},
+  {id:'sirkot',name:'Sirkot',region:'Syangja',alt:1430,land:700,sec:[160,250],notes:'Landing by the school ground',lat:28.03,lon:83.86,d:['green','green','yellow']},
+  {id:'bandipur',name:'Bandipur',region:'Tanahun',alt:1230,land:450,sec:[140,220],notes:'Landing at the Dumre river bank',lat:27.94,lon:84.41,d:['green','yellow','green']},
+  {id:'tansen',name:'Tansen',region:'Palpa',alt:1450,land:700,sec:[170,240],notes:'Launch at Shreenagar hill',lat:27.87,lon:83.54,d:['yellow','yellow','red']},
+  {id:'chandragiri',name:'Chandragiri',region:'Kathmandu',alt:2550,land:1400,sec:[110,200],notes:'Cable car to launch',lat:27.67,lon:85.21,d:['green','red','yellow']},
+  {id:'phulchoki',name:'Phulchoki',region:'Lalitpur',alt:2760,land:1500,sec:[150,230],notes:'Long hike — check the forecast first',lat:27.57,lon:85.40,d:['yellow','red','red']},
+  {id:'nagarkot',name:'Nagarkot',region:'Bhaktapur',alt:2100,land:1350,sec:[200,280],notes:'Landing in the terraces below',lat:27.72,lon:85.52,d:['red','red','yellow']},
+  {id:'jarsing',name:'Jarsingpauwa',region:'Kathmandu',alt:1650,land:1300,sec:[180,260],notes:'Ridge launch, wide landing',lat:27.80,lon:85.60,d:['green','yellow','green']},
+  {id:'kakani',name:'Kakani',region:'Nuwakot',alt:2030,land:1100,sec:[160,240],notes:'Army post nearby — ask before launching',lat:27.81,lon:85.25,d:['yellow','red','yellow']},
+  {id:'dhulikhel',name:'Dhulikhel',region:'Kavre',alt:1550,land:1000,sec:[180,250],notes:'Landing near the highway',lat:27.62,lon:85.55,d:['red','yellow','red']}
+];
+const mk = a => a.map(([t,r,reason,w,g,d,w2,cape,cb]) => ({t,r,reason,w,g,d,w2,cape,cb}));
+const RED_TODAY = mk([['06:00','red','gust-spread',3,17,295,4,'low',2070],['07:00','red','wind-direction',6,17,289,1,'low',1894],['09:00','red','gust-spread',4,19,290,4,'low',1782],['11:00','red','gust-spread',2,20,145,5,'low',2432],['13:00','red','gust-spread',2,18,100,3,'low',2570],['15:00','red','gust-spread',4,19,326,5,'low',1694],['18:00','red','gust-spread',3,18,308,4,'low',1882]]);
+const RED_TMRW = mk([['06:00','red','wind-direction',5,14,300,9,'low',1950],['08:00','red','gust-spread',6,21,290,12,'low',2010],['10:00','red','launch-wind',24,31,250,26,'low',2300],['12:00','red','launch-wind',27,35,245,31,'medium',2480],['14:00','red','wind-2000m',22,30,240,38,'medium',2600],['16:00','red','gust-spread',15,28,260,30,'low',2350],['18:00','red','gust-spread',9,22,290,18,'low',2100]]);
+const MIXED = mk([['06:00','green','light-wind',6,10,180,8,'low',1900],['07:00','green',null,8,12,170,10,'low',2050],['08:00','green',null,10,14,165,12,'low',2250],['09:00','green',null,12,17,160,14,'low',2450],['10:00','green',null,14,19,175,17,'medium',2700],['11:00','yellow','gust-spread',16,26,190,21,'medium',2900],['12:00','yellow','wind-2000m',18,27,200,32,'medium',3000],['13:00','yellow','launch-wind',22,29,210,30,'high',3100],['14:00','red','storm-risk',20,38,240,34,'high',3050],['15:00','red','storm-risk',18,42,260,36,'high',2900],['16:00','red','rain',14,30,280,28,'high',2600],['17:00','red','rain',10,22,270,20,'medium',2400],['18:00','red','gust-spread',8,24,300,16,'low',2200]]);
+const GOOD = mk([['06:00','green','light-wind',5,9,170,7,'low',2000],['08:00','green',null,9,13,165,10,'low',2300],['10:00','green',null,12,16,180,14,'low',2600],['12:00','green',null,14,19,190,18,'medium',2900],['14:00','yellow','gust-spread',16,25,200,22,'medium',3000],['16:00','green',null,12,17,195,16,'low',2800],['18:00','green','light-wind',6,10,210,9,'low',2400]]);
+const DAYS = [{name:'Today',date:'Fri 30 Oct'},{name:'Tomorrow',date:'Sat 31 Oct'},{name:'Sun 1 Nov',date:'Sun 1 Nov'}];
+const N16 = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+// Schematic pin layout for mockups (real map zooms/clusters); pins ≥ 48px apart at 390px.
+const MAPXY = { naudanda:[13,16], sarangkot:[30,22], kahun:[45,14], sirkot:[20,34], tansen:[10,48], bandipur:[42,40], kakani:[64,16], jarsing:[87,20], chandragiri:[60,34], nagarkot:[84,36], phulchoki:[68,50], dhulikhel:[90,52] };
+const RANK = {green:0,yellow:1,red:2};
+const ALERT_TIMES = ['18:00','19:00','20:00','21:00'];
+
+function dayHours(site, di) {
+  if (site.id === 'sarangkot') return [RED_TODAY, RED_TMRW, MIXED][di];
+  const r = site.d[di];
+  return r === 'green' ? GOOD : r === 'yellow' ? MIXED : (di === 0 ? RED_TODAY : RED_TMRW);
+}
+function pt(a, r) { const rad = a * Math.PI / 180; return `${(100 + r * Math.sin(rad)).toFixed(1)} ${(100 - r * Math.cos(rad)).toFixed(1)}`; }
+
+class Component extends DCLogic {
+  state = this.fromProps(this.props);
+  fromProps(p) {
+    return {
+      screen: p.screen || 'home', net: p.state || 'ok', themePref: p.theme || 'light', day: p.day ?? 0, hour: p.hour ?? null,
+      level: p.level || 'pilot', units: p.units || 'kmh', alt: p.alt || 'm', view: p.view || 'list', step: p.step ?? 1,
+      favs: p.state === 'empty' ? [] : ['sarangkot', 'bandipur', 'chandragiri'], site: p.site || 'sarangkot', mapSel: 'bandipur',
+      notif: true, siteAlert: true, alertTime: '19:00'
+    };
+  }
+  componentDidUpdate(prev) {
+    const keys = ['screen','state','theme','day','level','view','step','units','site'];
+    if (keys.some(k => prev[k] !== this.props[k])) this.setState(this.fromProps(this.props));
+  }
+  componentWillUnmount() { clearTimeout(this._t); }
+  retry = () => { this.setState({ net: 'loading' }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ net: 'ok' }), 900); };
+
+  renderVals() {
+    const s = this.state, p = this.props;
+    const th = s.themePref === 'system' ? (p.systemTheme || 'light') : s.themePref;
+    const t = T[th], R = RT[th];
+    const net = s.net === 'empty' ? 'ok' : s.net;
+    const offline = net === 'offline', stale = net === 'stale', loading = net === 'loading';
+    const kt = s.units === 'kt', ft = s.alt === 'ft';
+    const sp = v => kt ? Math.round(v * 0.54) : v, su = kt ? 'kt' : 'km/h';
+    const al = v => (ft ? Math.round(v * 3.281) : v) + (ft ? ' ft' : ' m');
+    const chip = r => ({ bg: R[r].s, fg: R[r].on, soft: R[r].soft, ink: R[r].ink, g: RL[r].g, label: RL[r].label });
+    const go = o => () => this.setState(o);
+    const desktop = !!p.desktop;
+    const scr = s.screen;
+    const site = SITES.find(x => x.id === s.site) || SITES[0];
+    const siteFav = s.favs.includes(site.id);
+    const siteNA = offline && !siteFav && (scr === 'detail' || scr === 'wind');
+    const error = net === 'error' || siteNA;
+    const ok = !loading && !error;
+
+    const toggleFav = id => () => this.setState(st => ({ favs: st.favs.includes(id) ? st.favs.filter(x => x !== id) : [...st.favs, id] }));
+    const row = x => {
+      const fav = s.favs.includes(x.id), avail = !offline || fav;
+      return { id: x.id, name: x.name, sub: avail ? `${x.region} · ${al(x.alt)}` : `${al(x.alt)} · not saved offline`,
+        star: fav ? '★' : '☆', starC: fav ? t.ink : t.ink3,
+        today: chip(avail ? x.d[0] : 'none'), tmrw: chip(avail ? x.d[1] : 'none'),
+        open: go({ screen: 'detail', site: x.id, day: 0, hour: null }), toggle: toggleFav(x.id), rank: RANK[x.d[0]] };
+    };
+    const favRows = SITES.filter(x => s.favs.includes(x.id)).map(row);
+    const otherRows = SITES.filter(x => !s.favs.includes(x.id)).map(row).sort((a, b) => offline ? 0 : a.rank - b.rank);
+    const nFly = SITES.filter(x => x.d[0] === 'green').length;
+
+    const hrs = dayHours(site, s.day);
+    const storm = hrs.find(h => h.reason === 'storm-risk');
+    const selT = s.hour && hrs.find(h => h.t === s.hour) ? s.hour : (storm ? storm.t : hrs[Math.floor(hrs.length / 2)].t);
+    const sh = hrs.find(h => h.t === selT);
+    const hours = hrs.map(h => {
+      const sel = h.t === selT;
+      return { t: h.t, c: chip(h.r), reason: h.reason ? REASON[h.reason] : 'Within your limits', w: sp(h.w), g: sp(h.g), rot: `rotate(${h.d}deg)`,
+        bg: sel ? t.surf : 'transparent', bd: sel ? t.ink : 'transparent', onPress: go({ hour: h.t }) };
+    });
+    const daily = site.id === 'sarangkot' ? ['red', 'red', 'yellow'] : site.d;
+    const dayTabs = DAYS.map((d, i) => {
+      const sel = i === s.day;
+      return { label: d.name, c: chip(daily[i]), bg: sel ? t.pri : t.surf, fg: sel ? t.onPri : t.ink, bd: sel ? t.pri : t.line, onPress: go({ day: i, hour: null }) };
+    });
+    // day summary
+    const segs = [];
+    hrs.forEach(h => { const l = segs[segs.length - 1]; if (l && l.r === h.r) l.b = h.t; else segs.push({ r: h.r, a: h.t, b: h.t }); });
+    const g1 = segs.find(x => x.r === 'green');
+    const bad = hrs.filter(h => h.r !== 'green' && h.reason);
+    const cnt = {}; bad.forEach(h => cnt[h.reason] = (cnt[h.reason] || 0) + 1);
+    const main = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a])[0];
+    const sum = g1
+      ? { c: chip('green'), title: `Best window ${g1.a}–${g1.b}`, body: segs.map(x => `${RL[x.r].label} ${x.a}–${x.b}`).join(' · ') }
+      : { c: chip(segs.some(x => x.r === 'yellow') ? 'yellow' : 'red'), title: segs.some(x => x.r === 'yellow') ? 'Marginal at best' : 'No flyable hours', body: main ? `Main reason: ${REASON[main]}.` : '' };
+    const inSec = sh.d >= site.sec[0] && sh.d <= site.sec[1];
+    const [a1, a2] = site.sec;
+    const capeIdx = { low: 0, medium: 1, high: 2 }[sh.cape];
+    const limitKmh = s.level === 'student' ? 20 : 30;
+
+    const wCols = [{ label: 'Surface', sub: 'launch' }, { label: ft ? '3280 ft' : '1000 m', sub: 'asl' }, { label: ft ? '6560 ft' : '2000 m', sub: 'asl' }, { label: ft ? '9840 ft' : '3000 m', sub: 'asl' }];
+    const wRows = hrs.map(h => {
+      const vals = [h.w, Math.round(h.w * 1.15) + 1, h.w2, Math.round(h.w2 * 1.3 + 4)];
+      return { t: h.t, c: chip(h.r), cells: vals.map((v, i) => {
+        const over = v > limitKmh;
+        return { v: sp(v), over, rot: `rotate(${h.d + i * 10}deg)`, bg: over ? R.red.soft : 'transparent', fg: over ? R.red.ink : t.ink, fw: over ? 700 : 500, sh: over ? `inset 0 0 0 2px ${R.red.ink}` : 'none' };
+      }) };
+    });
+
+    const radio = (cur, val) => ({ bd: cur === val ? t.ink : t.line, dot: cur === val ? t.ink : 'transparent' });
+    const levelOpts = [
+      { label: 'Student', desc: 'APPI 1–3. Uses stricter wind limits.', ...radio(s.level, 'student'), onPress: go({ level: 'student' }) },
+      { label: 'Pilot', desc: 'Club, free and tandem pilots. Standard limits.', ...radio(s.level, 'pilot'), onPress: go({ level: 'pilot' }) }
+    ];
+    const seg = (opts, cur, key) => opts.map(([v, label]) => ({ label, bg: cur === v ? t.pri : 'transparent', fg: cur === v ? t.onPri : t.ink, onPress: go({ [key]: v }) }));
+    const sw = on => ({ track: on ? t.pri : t.ink3, knob: on ? '23px' : '3px', knobC: on ? t.onPri : t.surf });
+
+    const lon0 = 83.3, lon1 = 85.95, lat0 = 27.35, lat1 = 28.55;
+    const mapSite = SITES.find(x => x.id === s.mapSel);
+    const pins = SITES.map(x => {
+      const fav = s.favs.includes(x.id), r = (!offline || fav) ? x.d[0] : 'none', c = chip(r);
+      const [mx, my] = MAPXY[x.id];
+      return { x: `${mx}%`, y: `${my}%`, z: x.id === s.mapSel ? 3 : fav ? 2 : 1,
+        bg: c.bg, fg: c.fg, g: c.g, label: `${x.name}: ${c.label}`, name: x.name, ring: x.id === s.mapSel ? t.ink : t.surf, showName: x.id === s.mapSel || fav, onPress: go({ mapSel: x.id }) };
+    });
+    const mr = row(mapSite);
+
+    const backMap = {
+      detail: { label: 'Sites', title: '', onPress: go({ screen: 'home' }) },
+      wind: { label: site.name, title: 'Wind by height', onPress: go({ screen: 'detail' }) },
+      settings: { label: 'Sites', title: 'Settings', onPress: go({ screen: 'home' }) }
+    };
+    const back = backMap[scr] || backMap.detail;
+    back.padR = back.title && !desktop ? '96px' : '0';
+
+    const legend = ['green', 'yellow', 'red'].map(chip);
+    const DESC = { green: 'Wind and weather are within the limits for your level.', yellow: 'Close to a limit. Look carefully and ask local pilots.', red: 'Outside the limits. The reason is shown, e.g. "Gusts too strong".' };
+    const colorTokens = [['bg', t.bg], ['surface', t.surf], ['surface2', t.surf2], ['ink', t.ink], ['ink2', t.ink2], ['ink3', t.ink3], ['line', t.line], ['primary', t.pri],
+      ['flyable', R.green.s], ['flyableSoft', R.green.soft], ['marginal', R.yellow.s], ['marginalSoft', R.yellow.soft], ['notFlyable', R.red.s], ['notFlyableSoft', R.red.soft], ['onFlyable', R.green.on], ['onMarginal', R.yellow.on]].map(([n, v]) => ({ n, v }));
+
+    return {
+      t, red: chip('red'), yel: chip('yellow'), su,
+      rootH: p.rootH || '100%', showStatus: p.statusBar !== false && !desktop && scr !== 'sheet' && scr !== 'landing',
+      todayLabel: 'Fri 30 Oct',
+      isOnb: scr === 'onboarding', onb1: scr === 'onboarding' && s.step === 1, onb2: scr === 'onboarding' && s.step === 2, onbCount: `${s.step} of 2`,
+      onbPrimary: s.step === 1 ? { label: 'Continue', onPress: go({ step: 2 }) } : { label: 'Allow notifications', onPress: go({ screen: 'home', notif: true }) },
+      finishOnb: go({ screen: 'home', notif: false }),
+      homeTop: scr === 'home' && !p.hideTop, isList: scr === 'home' && s.view === 'list', isMap: scr === 'home' && s.view === 'map',
+      backTop: (scr === 'detail' || scr === 'wind' || scr === 'settings') && !p.hideTop, showBack: !desktop || scr !== 'detail', back,
+      isDetail: scr === 'detail', isWind: scr === 'wind', isSettings: scr === 'settings', isLanding: scr === 'landing', isSheet: scr === 'sheet',
+      showOffline: offline && ['home', 'detail', 'wind'].includes(scr), showStale: stale && ['home', 'detail', 'wind'].includes(scr),
+      loading, error, ok,
+      errTitle: siteNA ? 'Not saved for offline use' : 'Server error, please try again later',
+      errBody: siteNA ? `Only favorites are saved. Connect to the internet to see ${site.name}.` : 'We could not load the forecast. Check again in a minute.',
+      retry: this.retry, goSettings: go({ screen: 'settings' }), goWind: go({ screen: 'wind' }), openApp: go({ screen: 'onboarding', step: 1 }),
+      updated: stale ? 'Updated 02:10' : 'Updated 09:31',
+      viewTabs: [['list', 'List'], ['map', 'Map']].map(([v, l]) => ({ label: l, bg: s.view === v ? t.pri : 'transparent', fg: s.view === v ? t.onPri : t.ink, onPress: go({ view: v }) })),
+      summary: offline ? 'Saved favorites only' : `${nFly} of ${SITES.length} sites flyable today`,
+      allLabel: offline ? 'Other sites' : 'All sites · best first',
+      legend, landingLegend: ['green', 'yellow', 'red'].map(r => ({ ...chip(r), desc: DESC[r] })),
+      favRows, otherRows, favEmpty: favRows.length === 0,
+      skel: ['70%', '55%', '62%', '48%', '66%', '52%', '60%', '45%'].map(w => ({ w })),
+      pins, mapSel: { ...mr, open: go({ screen: 'detail', site: mapSite.id, day: 0, hour: null }) },
+      site: { name: site.name, altLine: `Launch ${al(site.alt)} · Landing ${al(site.land)}`, notes: site.notes, star: siteFav ? '★' : '☆', starC: siteFav ? t.ink : t.ink3, toggleStar: toggleFav(site.id), sector: `${a1}°–${a2}°` },
+      siteAlert: { ...sw(s.siteAlert), sub: s.siteAlert ? `On · ${s.alertTime} the evening before` : 'Off', toggle: () => this.setState(st => ({ siteAlert: !st.siteAlert })) },
+      dayTabs, hours, sum,
+      storm: storm ? { on: true, title: `Storm risk from ${storm.t}`, body: `Thermals are strong (CAPE high) and storms may build in the afternoon. Plan to be on the ground well before ${storm.t}.` } : { on: false },
+      sel: { t: sh.t, w: sp(sh.w), g: sp(sh.g), dir: `${sh.d}° ${N16[Math.round(sh.d / 22.5) % 16]}`, inC: chip(inSec ? 'green' : 'red'), inText: inSec ? 'In the good sector' : 'Outside the good sector',
+        cape: sh.cape[0].toUpperCase() + sh.cape.slice(1), cb: al(sh.cb), w2: sp(sh.w2), aria: `Wind from ${sh.d} degrees, good sector ${a1} to ${a2} degrees` },
+      cmp: { sector: `M100 100 L${pt(a1, 72)} A72 72 0 ${a2 - a1 > 180 ? 1 : 0} 1 ${pt(a2, 72)} Z`, arrowT: `rotate(${sh.d} 100 100)`, fill: R.green.soft, stroke: R.green.s },
+      capeSegs: [0, 1, 2].map(i => ({ bg: i <= capeIdx ? t.ink : t.surf2 })),
+      wCols, wRows, limitText: `Above your limit — ${s.level === 'student' ? 'Student' : 'Pilot'}: ${sp(limitKmh)} ${su}`,
+      levelOpts, notif: { ...sw(s.notif), toggle: () => this.setState(st => ({ notif: !st.notif })) },
+      alertTime: s.alertTime, cycleAlert: () => this.setState(st => ({ alertTime: ALERT_TIMES[(ALERT_TIMES.indexOf(st.alertTime) + 1) % ALERT_TIMES.length] })),
+      unitOpts: seg([['kmh', 'km/h'], ['kt', 'knots']], s.units, 'units'), altOpts: seg([['m', 'm'], ['ft', 'ft']], s.alt, 'alt'),
+      themeOpts: seg([['system', 'System'], ['light', 'Light'], ['dark', 'Dark']], s.themePref, 'themePref'),
+      themeName: th === 'dark' ? 'Dark' : 'Light',
+      sheetHours: [MIXED[0], MIXED[3], MIXED[6], MIXED[8]].map((h, i) => ({ t: h.t, c: chip(h.r), reason: h.reason ? REASON[h.reason] : 'Within your limits', w: h.w, g: h.g, rot: `rotate(${h.d}deg)`, bg: i === 3 ? t.surf : 'transparent', bd: i === 3 ? t.ink : 'transparent' })),
+      colorTokens, spaceTokens: [['xs', 4], ['sm', 8], ['md', 12], ['lg', 16], ['xl', 24], ['2xl', 32], ['tap', 48]].map(([n, v]) => ({ n, v: `${v}`, w: `${v * 3}px` }))
+    };
+  }
+}
+</script>
+</body>
+</html>

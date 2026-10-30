@@ -2,13 +2,22 @@ import type { Site } from './entities.js';
 
 export type SeedSite = Pick<
   Site,
-  'name' | 'lat' | 'lon' | 'launchAltM' | 'landingAltM' | 'windSectors' | 'minLevel' | 'notes'
+  | 'name'
+  | 'region'
+  | 'lat'
+  | 'lon'
+  | 'launchAltM'
+  | 'landingAltM'
+  | 'windSectors'
+  | 'minLevel'
+  | 'notes'
 >;
 
 // Example values from the MVP spec. Every site must be checked with local pilots before launch.
 export const SEED_SITES: SeedSite[] = [
   {
     name: 'Sarangkot',
+    region: 'Pokhara',
     lat: 28.244,
     lon: 83.949,
     launchAltM: 1590,

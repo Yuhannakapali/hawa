@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>html,body{margin:0;background:#DCDFE2;-webkit-font-smoothing:antialiased} a{color:#0D1012;text-decoration:underline} a:hover{opacity:.75}</style>
+</helmet>
+<div style="padding:72px 80px 120px; display:flex; flex-direction:column; gap:96px; font-family:'Archivo', system-ui, sans-serif; color:#0D1012; width:max-content;">
+  <div style="display:flex; flex-direction:column; gap:12px; max-width:900px;">
+    <div style="font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#4A535B;">Hawa · screens v1 · 30 Oct 2026</div>
+    <div style="font-size:56px; font-weight:800; letter-spacing:-0.03em; line-height:1;">Flyable or not, hour by hour.</div>
+    <div style="font-size:18px; line-height:1.5; color:#4A535B; text-wrap:pretty;">Every screen in light and dark, with all states. Direction: alpine instrument. Near-black and white with slate neutrals. Archivo for text, IBM Plex Mono for numbers and times. Rating colors are always paired with a glyph and a label (✓ Flyable · ! Marginal · ✕ Not flyable). Frames are 390 × 844 and scroll inside. A clickable version is in <a href="Hawa Prototype.dc.html">Hawa Prototype</a>.</div>
+  </div>
+
+  <sc-for list="{{ sections }}" as="sec" hint-placeholder-count="7">
+    <div data-screen-label="{{ sec.title }}" style="display:flex; flex-direction:column; gap:28px;">
+      <div style="display:flex; align-items:baseline; gap:20px; border-bottom:2px solid #0D1012; padding-bottom:12px; max-width:1600px;">
+        <span style="font-size:36px; font-weight:800; letter-spacing:-0.02em;">{{ sec.title }}</span>
+        <span style="font-size:16px; color:#4A535B; line-height:1.4;">{{ sec.note }}</span>
+      </div>
+      <sc-for list="{{ sec.rows }}" as="row" hint-placeholder-count="2">
+        <div style="display:flex; gap:40px; align-items:flex-start;">
+          <div style="width:64px; flex-shrink:0; padding-top:30px; font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#4A535B;">{{ row.label }}</div>
+          <sc-for list="{{ row.frames }}" as="f" hint-placeholder-count="5">
+            <div style="display:flex; flex-direction:column; gap:10px; flex-shrink:0;">
+              <div style="font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:600; color:#0D1012;">{{ f.label }}</div>
+              <div style="width:{{ f.w }}; height:{{ f.h }}; border-radius:{{ f.r }}; overflow:hidden; background:{{ f.bg }}; box-shadow:0 0 0 1px rgba(0,0,0,.18), 0 18px 40px -20px rgba(0,0,0,.35);">
+                <dc-import name="HawaApp" screen="{{ f.screen }}" state="{{ f.state }}" theme="{{ f.theme }}" day="{{ f.day }}" view="{{ f.view }}" step="{{ f.step }}" level="{{ f.level }}" units="{{ f.units }}" root-h="{{ f.rootH }}" hint-size="100%,100%" style="display:block; width:100%; height:100%;"></dc-import>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+  </sc-for>
+
+  <div data-screen-label="Desktop web app" style="display:flex; flex-direction:column; gap:28px;">
+    <div style="display:flex; align-items:baseline; gap:20px; border-bottom:2px solid #0D1012; padding-bottom:12px; max-width:1600px;">
+      <span style="font-size:36px; font-weight:800; letter-spacing:-0.02em;">7 · Desktop web app</span>
+      <span style="font-size:16px; color:#4A535B;">Same components. List on the left, detail on the right. The hourly list and the compass/thermals sit side by side once the width allows.</span>
+    </div>
+    <sc-for list="{{ desktops }}" as="d" hint-placeholder-count="2">
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="font-family:'IBM Plex Mono', monospace; font-size:14px; font-weight:600;">{{ d.label }}</div>
+        <div style="width:1440px; height:900px; border-radius:12px; overflow:hidden; display:flex; flex-direction:column; background:{{ d.bg }}; color:{{ d.ink }}; box-shadow:0 0 0 1px rgba(0,0,0,.18), 0 24px 60px -30px rgba(0,0,0,.4);">
+          <div style="height:64px; flex-shrink:0; display:flex; align-items:center; gap:24px; padding:0 24px; border-bottom:1px solid {{ d.line }};">
+            <span style="font-size:24px; font-weight:800;">Hawa</span>
+            <span style="font-family:'IBM Plex Mono', monospace; font-size:13px; color:{{ d.ink2 }};">Fri 30 Oct · Updated 09:31 · Nepal time</span>
+            <div style="flex:1;"></div>
+            <div style="height:44px; padding:0 18px; border-radius:10px; border:1px solid {{ d.line }}; display:flex; align-items:center; font-weight:700; font-size:15px;">Settings</div>
+          </div>
+          <div style="flex:1; display:flex; min-height:0;">
+            <div style="width:420px; flex-shrink:0; border-right:1px solid {{ d.line }}; display:flex; flex-direction:column; min-height:0;">
+              <dc-import name="HawaApp" screen="home" theme="{{ d.theme }}" desktop="{{ true }}" hint-size="100%,100%" style="display:block; width:100%; height:100%;"></dc-import>
+            </div>
+            <div style="flex:1; min-width:0; display:flex; flex-direction:column; min-height:0;">
+              <dc-import name="HawaApp" screen="detail" theme="{{ d.theme }}" day="{{ 2 }}" desktop="{{ true }}" hide-top="{{ true }}" hint-size="100%,100%" style="display:block; width:100%; height:100%;"></dc-import>
+            </div>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div data-screen-label="Chat link preview" style="display:flex; flex-direction:column; gap:20px;">
+    <div style="display:flex; align-items:baseline; gap:20px; border-bottom:2px solid #0D1012; padding-bottom:12px; max-width:1600px;">
+      <span style="font-size:36px; font-weight:800; letter-spacing:-0.02em;">Link preview in chat groups</span>
+      <span style="font-size:16px; color:#4A535B;">Open Graph title and description for the public page. Short, readable without opening the page.</span>
+    </div>
+    <div style="width:360px; border-radius:16px; overflow:hidden; background:#FFFFFF; box-shadow:0 0 0 1px rgba(0,0,0,.15);">
+      <div style="height:189px; background:repeating-linear-gradient(135deg, #E8EBED 0 12px, #DFE3E6 12px 24px); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace; font-size:13px; color:#4A535B;">og-image 1200 × 630</div>
+      <div style="padding:12px 14px; display:flex; flex-direction:column; gap:4px;">
+        <span style="font-size:15px; font-weight:700;">Hawa: which Nepal launch sites are flyable today</span>
+        <span style="font-size:14px; color:#4A535B; line-height:1.35;">Free hourly flyable / marginal / not flyable scores for Sarangkot and 11 more sites. No ads.</span>
+        <span style="font-family:'IBM Plex Mono', monospace; font-size:12px; color:#69727A;">hawa.app</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const BG = { light: '#F4F5F6', dark: '#08090A' };
+const ph = (label, o) => ({ label, screen: 'home', state: 'ok', day: 0, view: 'list', step: 1, level: 'pilot', units: 'kmh', w: '390px', h: '844px', r: '36px', rootH: '100%', ...o });
+const both = (frames) => ['light', 'dark'].map(theme => ({ label: theme, frames: frames.map(f => ({ ...f, theme, bg: BG[theme] })) }));
+
+class Component extends DCLogic {
+  renderVals() {
+    const sections = [
+      { title: '0 · Components & tokens', note: 'RatingChip, HourCell, WindCompass, WindHeightCell, Banner, ErrorCard, controls. Tokens are in hawa-theme.ts.',
+        rows: both([ph('Component sheet', { screen: 'sheet', h: 'auto', r: '16px', rootH: 'auto' })]) },
+      { title: '1 · Onboarding', note: 'First start only. Two steps. Notifications can be skipped.',
+        rows: both([ph('Step 1 · safety + level', { screen: 'onboarding', step: 1 }), ph('Step 2 · alerts', { screen: 'onboarding', step: 2 })]) },
+      { title: '2 · Home', note: 'Favorites pinned at the top. Other sites sorted best first. Two chips per row: today and tomorrow.',
+        rows: both([ph('List'), ph('Map', { view: 'map' }), ph('Loading', { state: 'loading' }), ph('Empty · no favorites', { state: 'empty' }), ph('Error', { state: 'error' }), ph('Offline · cached favorites', { state: 'offline' }), ph('Stale > 6 h', { state: 'stale' })]) },
+      { title: '3 · Site detail', note: 'Sarangkot, real API data (today, red) and a mixed day (Sun) with a storm warning. Tap an hour to update the compass and thermals.',
+        rows: both([ph('Today · real data', { screen: 'detail', h: '1560px' }), ph('Sun · mixed day + storm', { screen: 'detail', day: 2, h: '1560px' }), ph('Loading', { screen: 'detail', state: 'loading', h: '1560px' }), ph('Error', { screen: 'detail', state: 'error', h: '1560px' }), ph('Offline (favorite)', { screen: 'detail', state: 'offline', h: '1560px' }), ph('Stale > 6 h', { screen: 'detail', state: 'stale', h: '1560px' })]) },
+      { title: '4 · Wind by height', note: 'Hour column and header row are sticky. Cells above the limit get a red tint, bold type, an outline and ▲.',
+        rows: both([ph('Sun · Pilot limit', { screen: 'wind', day: 2, h: '1000px' }), ph('Sun · Student limit', { screen: 'wind', day: 2, level: 'student', h: '1000px' }), ph('Tomorrow · knots', { screen: 'wind', day: 1, units: 'kt', h: '1000px' }), ph('Loading', { screen: 'wind', state: 'loading', h: '1000px' }), ph('Error', { screen: 'wind', state: 'error', h: '1000px' }), ph('Offline', { screen: 'wind', state: 'offline', day: 2, h: '1000px' }), ph('Stale > 6 h', { screen: 'wind', state: 'stale', day: 2, h: '1000px' })]) },
+      { title: '5 · Settings', note: 'Local only. No account, no login, no profile. Loading, error and offline states do not apply here.',
+        rows: both([ph('Settings', { screen: 'settings', h: '1320px' })]) },
+      { title: '6 · Public home page', note: 'Static web page. Must load fast from a chat link. Phone width first.',
+        rows: both([ph('Phone 390', { screen: 'landing', h: 'auto', rootH: 'auto', r: '24px' }), ph('Desktop 1280', { screen: 'landing', w: '1280px', h: 'auto', rootH: 'auto', r: '12px' })]) }
+    ];
+    return {
+      sections,
+      desktops: [
+        { label: 'Light · 1440', theme: 'light', bg: '#F4F5F6', ink: '#0D1012', ink2: '#4A535B', line: '#D3D8DC' },
+        { label: 'Dark · 1440', theme: 'dark', bg: '#08090A', ink: '#F3F5F6', ink2: '#B0B8BF', line: '#2B3034' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -8,12 +8,13 @@ export interface ScoreLimits {
   wind2000mKmh: Band;
   rainMm: Band;
   stormCapeJkg: Band;
+  windTableLimitKmh: number;
 }
 
 export type LimitsByLevel = Record<PilotLevel, ScoreLimits>;
 
 // Starting values from the MVP spec. A local instructor must review them before launch.
-const SHARED_DEFAULTS: Omit<ScoreLimits, 'launchWindKmh'> = {
+const SHARED_DEFAULTS: Omit<ScoreLimits, 'launchWindKmh' | 'windTableLimitKmh'> = {
   gustSpreadKmh: { greenMax: 8, yellowMax: 12, greenMaxInclusive: false },
   directionYellowMarginDeg: 20,
   wind2000mKmh: { greenMax: 25, yellowMax: 35, greenMaxInclusive: false },
@@ -25,10 +26,12 @@ export const DEFAULT_LIMITS: LimitsByLevel = {
   student: {
     ...SHARED_DEFAULTS,
     launchWindKmh: { greenMax: 15, yellowMax: 18, greenMaxInclusive: true },
+    windTableLimitKmh: 20,
   },
   pilot: {
     ...SHARED_DEFAULTS,
     launchWindKmh: { greenMax: 20, yellowMax: 25, greenMaxInclusive: true },
+    windTableLimitKmh: 30,
   },
 };
 

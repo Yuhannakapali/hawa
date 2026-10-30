@@ -1,0 +1,27 @@
+{
+  "extends": "@react-native/typescript-config",
+  "include": [
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/Pods",
+    "dist-web",
+    "vite.web.config.mts"
+  ],
+  "references": [
+    {
+      "path": "../contracts"
+    },
+    {
+      "path": "../scoring"
+    }
+  ],
+  "compilerOptions": {
+    "customConditions": [
+      "@hawa/source",
+      "react-native"
+    ]
+  }
+}

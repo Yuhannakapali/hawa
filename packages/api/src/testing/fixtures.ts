@@ -1,5 +1,5 @@
 import type { DataSource } from 'typeorm';
-import { ForecastHour, Site } from '../db/entities.js';
+import { ForecastHour, Site, WindGridFrame } from '../db/entities.js';
 import type { HourlyWeather } from '../weather/types.js';
 
 export const TEST_MODEL = 'test-model';
@@ -7,6 +7,7 @@ export const TEST_MODEL = 'test-model';
 export async function insertSite(db: DataSource, overrides: Partial<Site> = {}): Promise<Site> {
   return db.getRepository(Site).save({
     name: 'Sarangkot',
+    region: 'Pokhara',
     lat: 28.244,
     lon: 83.949,
     launchAltM: 1590,
@@ -60,6 +61,23 @@ export async function insertForecastHour(
     reasonStudent: null,
     reasonPilot: null,
     notes: [],
+    fetchedAt: timeUtc,
+    ...overrides,
+  });
+}
+
+export async function insertWindFrame(
+  db: DataSource,
+  timeUtc: Date,
+  heightM: number,
+  overrides: Partial<WindGridFrame> = {},
+): Promise<void> {
+  await db.getRepository(WindGridFrame).insert({
+    timeUtc,
+    heightM,
+    model: TEST_MODEL,
+    u: [0],
+    v: [0],
     fetchedAt: timeUtc,
     ...overrides,
   });

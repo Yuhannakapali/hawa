@@ -5,7 +5,7 @@ import { toNepalLocal } from '../time/nepal-time.js';
 import type { HourlyWeather, WeatherSource } from '../weather/types.js';
 
 export const FORECAST_DAYS = 3;
-const FORECAST_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
+export const FORECAST_RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
 export interface RefreshFailure {
   siteId: string;

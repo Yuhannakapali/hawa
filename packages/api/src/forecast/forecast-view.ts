@@ -6,8 +6,8 @@ import {
   type CheckId,
   type PilotLevel,
   type Rating,
-  type ScoreNote,
 } from '@hawa/scoring';
+import type { CapeLevel, DayView, HourView } from '@hawa/contracts';
 import type { ForecastHour } from '../db/entities.js';
 import { addDays, toNepalLocal } from '../time/nepal-time.js';
 
@@ -15,36 +15,11 @@ const FIRST_LOCAL_HOUR = 6;
 const LAST_LOCAL_HOUR = 18;
 const ALTITUDES_M = [1000, 2000, 3000] as const;
 
-export type CapeLevel = 'low' | 'medium' | 'high';
-
 const CAPE_LEVEL_BY_RATING: Record<Rating, CapeLevel> = {
   green: 'low',
   yellow: 'medium',
   red: 'high',
 };
-
-export interface HourView {
-  timeUtc: string;
-  localTime: string;
-  rating: Rating;
-  reason: CheckId | null;
-  notes: ScoreNote[];
-  windKmh: number;
-  gustKmh: number;
-  dirDeg: number;
-  windAtHeight: { altitudeM: number; speedKmh: number; dirDeg: number }[];
-  capeJkg: number;
-  capeLevel: CapeLevel;
-  cloudBaseM: number;
-  rainMm: number;
-}
-
-export interface DayView {
-  date: string;
-  rating: Rating | null;
-  stormWarning: boolean;
-  hours: HourView[];
-}
 
 export function scoreFor(
   row: ForecastHour,
@@ -78,6 +53,7 @@ function pad(value: number): string {
 
 function toHourView(row: ForecastHour, level: PilotLevel): HourView {
   const local = toNepalLocal(row.timeUtc);
+  const limitKmh = DEFAULT_LIMITS[level].windTableLimitKmh;
   const altitudeWinds: Record<(typeof ALTITUDES_M)[number], [number, number]> = {
     1000: [row.wind1000mKmh, row.wind1000mDirDeg],
     2000: [row.wind2000mKmh, row.wind2000mDirDeg],
@@ -91,9 +67,10 @@ function toHourView(row: ForecastHour, level: PilotLevel): HourView {
     windKmh: row.windKmh,
     gustKmh: row.gustKmh,
     dirDeg: row.dirDeg,
+    windOverLimit: row.windKmh > limitKmh,
     windAtHeight: ALTITUDES_M.map((altitudeM) => {
       const [speedKmh, dirDeg] = altitudeWinds[altitudeM];
-      return { altitudeM, speedKmh, dirDeg };
+      return { altitudeM, speedKmh, dirDeg, overLimit: speedKmh > limitKmh };
     }),
     capeJkg: row.capeJkg,
     capeLevel: capeLevel(row.capeJkg, level),

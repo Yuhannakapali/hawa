@@ -18,6 +18,9 @@ export class Site {
   @Column({ type: 'text', unique: true })
   name!: string;
 
+  @Column({ type: 'text', default: '' })
+  region!: string;
+
   @Column({ type: 'double precision' })
   lat!: number;
 
@@ -47,6 +50,27 @@ export class Site {
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
   updatedAt!: Date;
+}
+
+@Entity('wind_grid_frames')
+export class WindGridFrame {
+  @PrimaryColumn({ name: 'time_utc', type: 'timestamptz' })
+  timeUtc!: Date;
+
+  @PrimaryColumn({ name: 'height_m', type: 'integer' })
+  heightM!: number;
+
+  @PrimaryColumn({ type: 'text' })
+  model!: string;
+
+  @Column({ type: 'real', array: true })
+  u!: number[];
+
+  @Column({ type: 'real', array: true })
+  v!: number[];
+
+  @Column({ name: 'fetched_at', type: 'timestamptz' })
+  fetchedAt!: Date;
 }
 
 @Entity('forecast_hours')

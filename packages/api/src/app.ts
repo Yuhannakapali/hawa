@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import type { DataSource } from 'typeorm';
 import { siteRoutes } from './routes/sites.js';
 import { statusRoutes } from './routes/status.js';
+import { windGridRoutes } from './routes/wind-grid.js';
 
 export interface AppDeps {
   db: DataSource;
@@ -19,5 +20,6 @@ export function buildApp({
   const app = Fastify({ logger });
   app.register(siteRoutes, { db, model, now });
   app.register(statusRoutes, { db, model, now });
+  app.register(windGridRoutes, { db, model, now });
   return app;
 }

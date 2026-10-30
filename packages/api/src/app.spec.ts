@@ -64,6 +64,7 @@ describe('API', () => {
             name: 'Alpha',
             lat: 28.244,
             lon: 83.949,
+            region: 'Pokhara',
             launchAltM: 1590,
             minLevel: 'student',
             today: 'green',
@@ -105,6 +106,7 @@ describe('API', () => {
       expect(body).toEqual({
         id: site.id,
         name: 'Sarangkot',
+        region: 'Pokhara',
         lat: 28.244,
         lon: 83.949,
         launchAltM: 1590,
@@ -143,6 +145,7 @@ describe('API', () => {
         level: 'student',
         model: TEST_MODEL,
         fetchedAt: nepalTime('2026-10-30', 19).toISOString(),
+        windLimitKmh: 20,
         credit: CREDIT,
       });
       expect(body.days.map((d: { date: string }) => d.date)).toEqual([
@@ -198,16 +201,40 @@ describe('API', () => {
         windKmh: 10,
         gustKmh: 14,
         dirDeg: 180,
+        windOverLimit: false,
         windAtHeight: [
-          { altitudeM: 1000, speedKmh: 8, dirDeg: 180 },
-          { altitudeM: 2000, speedKmh: 15, dirDeg: 200 },
-          { altitudeM: 3000, speedKmh: 25, dirDeg: 250 },
+          { altitudeM: 1000, speedKmh: 8, dirDeg: 180, overLimit: false },
+          { altitudeM: 2000, speedKmh: 15, dirDeg: 200, overLimit: false },
+          { altitudeM: 3000, speedKmh: 25, dirDeg: 250, overLimit: false },
         ],
         capeJkg: 1000,
         capeLevel: 'medium',
         cloudBaseM: 2500,
         rainMm: 0,
       });
+    });
+
+    it('flags wind above the level limit at each height', async () => {
+      const site = await insertSite(db);
+      await insertForecastHour(db, site.id, nepalTime('2026-10-30', 12), {
+        windKmh: 25,
+        wind1000mKmh: 20,
+        wind2000mKmh: 21,
+        wind3000mKmh: 31,
+      });
+
+      const student = (await get(`/v1/sites/${site.id}/forecast?days=1`)).body;
+      const pilot = (await get(`/v1/sites/${site.id}/forecast?days=1&level=pilot`)).body;
+
+      const flags = (body: {
+        days: { hours: { windOverLimit: boolean; windAtHeight: { overLimit: boolean }[] }[] }[];
+      }) => {
+        const hour = body.days[0]!.hours[0]!;
+        return [hour.windOverLimit, ...hour.windAtHeight.map((w) => w.overLimit)];
+      };
+      expect(flags(student)).toEqual([true, false, true, true]);
+      expect(flags(pilot)).toEqual([false, false, false, true]);
+      expect(pilot.windLimitKmh).toBe(30);
     });
 
     it('warns of storms when afternoon CAPE is high', async () => {

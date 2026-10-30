@@ -1,7 +1,8 @@
-import type { PilotLevel } from '@hawa/scoring';
+import type { ForecastResponse, Page, PilotLevel, SiteDetail, SiteSummary } from '@hawa/contracts';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { And, In, LessThan, MoreThanOrEqual, type DataSource } from 'typeorm';
 import { OPEN_METEO_CREDIT } from '../credit.js';
+import { DEFAULT_LIMITS } from '@hawa/scoring';
 import { ForecastHour, Site } from '../db/entities.js';
 import { buildDays, dailyRatingFor } from '../forecast/forecast-view.js';
 import { FORECAST_DAYS } from '../forecast/refresh-forecasts.js';
@@ -68,7 +69,7 @@ export async function siteRoutes(app: FastifyInstance, { db, model, now }: SiteR
         },
       },
     },
-    async (request) => {
+    async (request): Promise<Page<SiteSummary>> => {
       const { level, limit, offset } = request.query;
       const [page, total] = await sites.findAndCount({
         where: { active: true },
@@ -85,11 +86,12 @@ export async function siteRoutes(app: FastifyInstance, { db, model, now }: SiteR
         SITE_LIST_DAYS,
       );
 
-      const items = page.map((site) => {
+      const items = page.map((site): SiteSummary => {
         const siteRows = rows.filter((r) => r.siteId === site.id);
         return {
           id: site.id,
           name: site.name,
+          region: site.region,
           lat: site.lat,
           lon: site.lon,
           launchAltM: site.launchAltM,
@@ -110,9 +112,10 @@ export async function siteRoutes(app: FastifyInstance, { db, model, now }: SiteR
       if (site === null) {
         return sendNotFound(reply);
       }
-      return {
+      const detail: SiteDetail = {
         id: site.id,
         name: site.name,
+        region: site.region,
         lat: site.lat,
         lon: site.lon,
         launchAltM: site.launchAltM,
@@ -123,6 +126,7 @@ export async function siteRoutes(app: FastifyInstance, { db, model, now }: SiteR
         createdAt: site.createdAt.toISOString(),
         updatedAt: site.updatedAt.toISOString(),
       };
+      return detail;
     },
   );
 
@@ -155,14 +159,16 @@ export async function siteRoutes(app: FastifyInstance, { db, model, now }: SiteR
         fetchedAt = new Date(latest).toISOString();
       }
 
-      return {
+      const forecast: ForecastResponse = {
         siteId: site.id,
         level,
         model,
         fetchedAt,
+        windLimitKmh: DEFAULT_LIMITS[level].windTableLimitKmh,
         credit: OPEN_METEO_CREDIT,
         days: buildDays(rows, level, today, days),
       };
+      return forecast;
     },
   );
 }

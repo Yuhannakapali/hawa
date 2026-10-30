@@ -1,3 +1,4 @@
+import type { StatusResponse } from '@hawa/contracts';
 import type { FastifyInstance } from 'fastify';
 import type { DataSource } from 'typeorm';
 import { OPEN_METEO_CREDIT } from '../credit.js';
@@ -12,7 +13,7 @@ export interface StatusRoutesOptions {
 }
 
 export async function statusRoutes(app: FastifyInstance, { db, model, now }: StatusRoutesOptions) {
-  app.get('/v1/status', async () => {
+  app.get('/v1/status', async (): Promise<StatusResponse> => {
     const latest = await db
       .getRepository(ForecastHour)
       .createQueryBuilder('f')

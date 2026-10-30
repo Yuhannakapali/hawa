@@ -2,7 +2,7 @@ import { buildApp } from './app.js';
 import { loadConfig } from './config.js';
 import { createDataSource } from './db/data-source.js';
 import { scheduleJobs } from './jobs/scheduler.js';
-import { OpenMeteoSource } from './weather/open-meteo.js';
+import { OpenMeteoSource, OpenMeteoWindGridSource } from './weather/open-meteo.js';
 
 const config = loadConfig();
 const db = createDataSource(config.databaseUrl);
@@ -11,7 +11,8 @@ await db.runMigrations();
 
 const source = new OpenMeteoSource({ baseUrl: config.openMeteoUrl });
 const app = buildApp({ db, model: source.model, logger: true });
-const stopJobs = scheduleJobs(db, source, app.log);
+const gridSource = new OpenMeteoWindGridSource({ baseUrl: config.openMeteoUrl });
+const stopJobs = scheduleJobs(db, source, gridSource, app.log);
 
 async function shutdown() {
   stopJobs();

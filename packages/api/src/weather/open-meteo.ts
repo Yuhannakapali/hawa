@@ -1,7 +1,16 @@
 import { NEPAL_TIME_ZONE } from '../time/nepal-time.js';
 import type { HourlyWeather, WeatherSource, WindAtHeight } from './types.js';
+import {
+  SURFACE_HEIGHT_M,
+  WIND_GRID_HEIGHTS_M,
+  type GridPoint,
+  type WindFrame,
+  type WindGridSource,
+} from './wind-grid.js';
 
 export const PRESSURE_LEVELS_HPA = [900, 850, 800, 700, 600] as const;
+
+const GRID_SURFACE_VARIABLES = ['wind_speed_10m', 'wind_direction_10m'];
 
 const SURFACE_VARIABLES = [
   'wind_speed_10m',
@@ -89,18 +98,25 @@ class HourReader {
   }
 }
 
-function toHour(body: OpenMeteoResponse, index: number): HourlyWeather | null {
-  const read = new HourReader(body.hourly, index);
-  const localMs = Date.parse(`${body.hourly.time[index]}Z`);
-
-  const levels = PRESSURE_LEVELS_HPA.map((hpa) => ({
+function readLevels(read: HourReader): LevelWind[] {
+  return PRESSURE_LEVELS_HPA.map((hpa) => ({
     heightM: read.get(`geopotential_height_${hpa}hPa`),
     ...toComponents(read.get(`wind_speed_${hpa}hPa`), read.get(`wind_direction_${hpa}hPa`)),
   })).sort((a, b) => a.heightM - b.heightM);
+}
+
+function utcTime(body: OpenMeteoResponse, index: number): Date {
+  const localMs = Date.parse(`${body.hourly.time[index]}Z`);
+  return new Date(localMs - body.utc_offset_seconds * MS_PER_SECOND);
+}
+
+function toHour(body: OpenMeteoResponse, index: number): HourlyWeather | null {
+  const read = new HourReader(body.hourly, index);
+  const levels = readLevels(read);
 
   const spreadDeg = read.get('temperature_2m') - read.get('dew_point_2m');
   const hour: HourlyWeather = {
-    timeUtc: new Date(localMs - body.utc_offset_seconds * MS_PER_SECOND),
+    timeUtc: utcTime(body, index),
     windKmh: read.get('wind_speed_10m'),
     gustKmh: read.get('wind_gusts_10m'),
     dirDeg: read.get('wind_direction_10m'),
@@ -122,19 +138,20 @@ export interface OpenMeteoOptions {
   fetch?: FetchFn;
 }
 
-export class OpenMeteoSource implements WeatherSource {
-  readonly model = 'best_match';
+const OPEN_METEO_MODEL = 'best_match';
+
+class OpenMeteoClient {
   private readonly fetchFn: FetchFn;
 
   constructor(private readonly options: OpenMeteoOptions) {
     this.fetchFn = options.fetch ?? ((url) => fetch(url));
   }
 
-  async fetchHourly(lat: number, lon: number, days: number): Promise<HourlyWeather[]> {
+  async get<T>(points: GridPoint[], variables: string[], days: number): Promise<T> {
     const url = new URL(this.options.baseUrl);
-    url.searchParams.set('latitude', String(lat));
-    url.searchParams.set('longitude', String(lon));
-    url.searchParams.set('hourly', [...SURFACE_VARIABLES, ...levelVariables()].join(','));
+    url.searchParams.set('latitude', points.map((p) => p.lat).join(','));
+    url.searchParams.set('longitude', points.map((p) => p.lon).join(','));
+    url.searchParams.set('hourly', variables.join(','));
     url.searchParams.set('wind_speed_unit', 'kmh');
     url.searchParams.set('timezone', NEPAL_TIME_ZONE);
     url.searchParams.set('forecast_days', String(days));
@@ -143,9 +160,80 @@ export class OpenMeteoSource implements WeatherSource {
     if (!res.ok) {
       throw new Error(`Open-Meteo request failed with ${res.status}`);
     }
-    const body = (await res.json()) as OpenMeteoResponse;
+    return (await res.json()) as T;
+  }
+}
+
+export class OpenMeteoSource implements WeatherSource {
+  readonly model = OPEN_METEO_MODEL;
+  private readonly client: OpenMeteoClient;
+
+  constructor(options: OpenMeteoOptions) {
+    this.client = new OpenMeteoClient(options);
+  }
+
+  async fetchHourly(lat: number, lon: number, days: number): Promise<HourlyWeather[]> {
+    const body = await this.client.get<OpenMeteoResponse>(
+      [{ lat, lon }],
+      [...SURFACE_VARIABLES, ...levelVariables()],
+      days,
+    );
     return body.hourly.time
       .map((_, index) => toHour(body, index))
       .filter((hour): hour is HourlyWeather => hour !== null);
+  }
+}
+
+function windAtGridHeight(read: HourReader, heightM: number): { u: number; v: number } {
+  if (heightM === SURFACE_HEIGHT_M) {
+    return toComponents(read.get('wind_speed_10m'), read.get('wind_direction_10m'));
+  }
+  const wind = windAtAltitude(readLevels(read), heightM);
+  return toComponents(wind.speedKmh, wind.dirDeg);
+}
+
+export class OpenMeteoWindGridSource implements WindGridSource {
+  readonly model = OPEN_METEO_MODEL;
+  private readonly client: OpenMeteoClient;
+
+  constructor(options: OpenMeteoOptions) {
+    this.client = new OpenMeteoClient(options);
+  }
+
+  async fetchGrid(points: GridPoint[], days: number): Promise<WindFrame[]> {
+    const response = await this.client.get<OpenMeteoResponse | OpenMeteoResponse[]>(
+      points,
+      [...GRID_SURFACE_VARIABLES, ...levelVariables()],
+      days,
+    );
+    let locations: OpenMeteoResponse[] = [];
+    if (Array.isArray(response)) {
+      locations = response;
+    } else {
+      locations = [response];
+    }
+    const first = locations[0];
+    if (first === undefined) {
+      return [];
+    }
+
+    const frames: WindFrame[] = [];
+    first.hourly.time.forEach((_, index) => {
+      for (const heightM of WIND_GRID_HEIGHTS_M) {
+        const frame: WindFrame = { timeUtc: utcTime(first, index), heightM, u: [], v: [] };
+        let missing = false;
+        for (const location of locations) {
+          const read = new HourReader(location.hourly, index);
+          const wind = windAtGridHeight(read, heightM);
+          missing = missing || read.missing;
+          frame.u.push(wind.u);
+          frame.v.push(wind.v);
+        }
+        if (!missing) {
+          frames.push(frame);
+        }
+      }
+    });
+    return frames;
   }
 }

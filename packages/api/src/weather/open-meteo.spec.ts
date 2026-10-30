@@ -1,4 +1,4 @@
-import { OpenMeteoSource, PRESSURE_LEVELS_HPA } from './open-meteo.js';
+import { OpenMeteoSource, OpenMeteoWindGridSource, PRESSURE_LEVELS_HPA } from './open-meteo.js';
 
 const NEPAL_OFFSET_SECONDS = 20700;
 
@@ -115,5 +115,60 @@ describe('OpenMeteoSource', () => {
   it('throws when Open-Meteo fails', async () => {
     const { source } = sourceReturning({ reason: 'bad' }, 400);
     await expect(source.fetchHourly(28.244, 83.949, 1)).rejects.toThrow(/400/);
+  });
+});
+
+describe('OpenMeteoWindGridSource', () => {
+  const points = [
+    { lat: 27, lon: 84 },
+    { lat: 27, lon: 84.5 },
+  ];
+
+  function location(speed10m: number) {
+    return {
+      utc_offset_seconds: NEPAL_OFFSET_SECONDS,
+      elevation: 1500,
+      hourly: {
+        time: ['2026-10-30T06:00'],
+        wind_speed_10m: [speed10m],
+        wind_direction_10m: [270],
+        ...levelFields(HEIGHTS, same(20), same(180)),
+      },
+    };
+  }
+
+  it('requests every point in one call and returns frames per height', async () => {
+    const fetchFn = vi.fn(
+      async (_url: string) =>
+        new Response(JSON.stringify([location(10), location(30)]), { status: 200 }),
+    );
+    const source = new OpenMeteoWindGridSource({
+      baseUrl: 'https://api.example.test/v1/forecast',
+      fetch: fetchFn,
+    });
+
+    const frames = await source.fetchGrid(points, 2);
+
+    const url = new URL(String(fetchFn.mock.calls[0]![0]));
+    expect(url.searchParams.get('latitude')).toBe('27,27');
+    expect(url.searchParams.get('longitude')).toBe('84,84.5');
+    expect(url.searchParams.get('forecast_days')).toBe('2');
+    expect(frames.map((f) => f.heightM)).toEqual([10, 2000, 3000]);
+    const surface = frames[0]!;
+    expect(surface.timeUtc).toEqual(new Date('2026-10-30T00:15:00Z'));
+    expect(surface.u[0]).toBeCloseTo(10);
+    expect(surface.v[0]).toBeCloseTo(0);
+    expect(surface.u[1]).toBeCloseTo(30);
+    const at2000 = frames[1]!;
+    expect(at2000.u[0]).toBeCloseTo(0);
+    expect(at2000.v[0]).toBeCloseTo(20);
+  });
+
+  it('throws when Open-Meteo fails', async () => {
+    const source = new OpenMeteoWindGridSource({
+      baseUrl: 'https://api.example.test/v1/forecast',
+      fetch: async () => new Response('{}', { status: 429 }),
+    });
+    await expect(source.fetchGrid(points, 1)).rejects.toThrow(/429/);
   });
 });
