@@ -164,9 +164,9 @@ The forecast job gets data and calculates scores every hour. The app reads score
 
 | Part | Choice | Reason |
 | --- | --- | --- |
-| Mobile app | Flutter (Dart) | One codebase for Android, iOS, and the website (Flutter web). A static HTML home page helps search engines find the app. |
+| Mobile app | React Native CLI (TypeScript) | One codebase for Android, iOS, and the website (React Native Web, bundled with Vite for the web build). Written in TypeScript like the backend, so the app reuses the shared scoring logic and types (`@hawa/scoring`) from the same repo. A static HTML home page helps search engines find the app. |
 | Map | MapLibre with a hosted vector tile provider | Free and open source |
-| Local cache | SQLite on the phone | Offline forecast for favorites |
+| Local cache | SQLite on the phone (op-sqlite), browser storage on the web | Offline forecast for favorites |
 | Backend | Python with FastAPI | Simple, fast to build, good weather data libraries |
 | Database | PostgreSQL (managed) | Reliable, low cost |
 | Jobs | Scheduled tasks on the same server | No extra service needed for the MVP |
