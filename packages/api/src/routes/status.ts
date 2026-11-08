@@ -2,7 +2,7 @@ import type { StatusResponse } from '@hawa/contracts';
 import type { FastifyInstance } from 'fastify';
 import type { DataSource } from 'typeorm';
 import { OPEN_METEO_CREDIT } from '../credit.js';
-import { ForecastHour } from '../db/entities.js';
+import { ForecastHour } from '../db/entities/forecast-hour.entity.js';
 
 const STALE_AFTER_MS = 6 * 60 * 60 * 1000;
 

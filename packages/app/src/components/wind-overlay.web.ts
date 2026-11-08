@@ -36,7 +36,12 @@ function washImage(field: WindField): string {
     const row = grid.nLat - 1 - iLat;
     for (let iLon = 0; iLon < grid.nLon; iLon++) {
       const i = iLat * grid.nLon + iLon;
-      const [r, g, b] = speedColor(Math.hypot(field.u[i]!, field.v[i]!));
+      const u = field.u[i];
+      const v = field.v[i];
+      if (u === null || u === undefined || v === null || v === undefined) {
+        continue;
+      }
+      const [r, g, b] = speedColor(Math.hypot(u, v));
       const p = (row * grid.nLon + iLon) * 4;
       image.data[p] = r;
       image.data[p + 1] = g;
@@ -135,9 +140,7 @@ export class WindOverlay {
       return;
     }
     this.map.addSource(SOURCE_ID, { type: 'image', url, coordinates });
-    const firstLabel = this.map
-      .getStyle()
-      .layers.find(layer => layer.type === 'symbol');
+    const firstLabel = this.map.getStyle().layers.find((layer) => layer.type === 'symbol');
     this.map.addLayer(
       {
         id: LAYER_ID,
@@ -182,9 +185,7 @@ export class WindOverlay {
   }
 
   private seed(): void {
-    this.particles = Array.from({ length: PARTICLE_COUNT }, () =>
-      this.randomParticle(),
-    );
+    this.particles = Array.from({ length: PARTICLE_COUNT }, () => this.randomParticle());
   }
 
   private clear(): void {
@@ -215,7 +216,7 @@ export class WindOverlay {
     ctx.lineWidth = LINE_WIDTH;
     ctx.beginPath();
 
-    this.particles = this.particles.map(particle => {
+    this.particles = this.particles.map((particle) => {
       const at = this.map.unproject([particle.x, particle.y]);
       const wind = sampleWind(field, at.lat, at.lng);
       if (wind === null || particle.age > MAX_AGE_FRAMES) {

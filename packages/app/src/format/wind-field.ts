@@ -2,8 +2,8 @@ import type { WindGridLayout } from '@hawa/contracts';
 
 export interface WindField {
   grid: WindGridLayout;
-  u: number[];
-  v: number[];
+  u: (number | null)[];
+  v: (number | null)[];
 }
 
 export interface Wind {
@@ -25,12 +25,12 @@ export const WIND_SPEED_STOPS: { kmh: number; rgb: Rgb }[] = [
 ];
 
 function valueAt(
-  values: number[],
+  values: (number | null)[],
   grid: WindGridLayout,
   iLat: number,
   iLon: number,
-): number {
-  return values[iLat * grid.nLon + iLon]!;
+): number | null {
+  return values[iLat * grid.nLon + iLon] ?? null;
 }
 
 export function sampleWind(
@@ -49,17 +49,25 @@ export function sampleWind(
   const fx = x - x0;
   const fy = y - y0;
 
-  function blend(values: number[]): number {
-    const south =
-      valueAt(values, grid, y0, x0) * (1 - fx) +
-      valueAt(values, grid, y0, x0 + 1) * fx;
-    const north =
-      valueAt(values, grid, y0 + 1, x0) * (1 - fx) +
-      valueAt(values, grid, y0 + 1, x0 + 1) * fx;
+  function blend(values: (number | null)[]): number | null {
+    const sw = valueAt(values, grid, y0, x0);
+    const se = valueAt(values, grid, y0, x0 + 1);
+    const nw = valueAt(values, grid, y0 + 1, x0);
+    const ne = valueAt(values, grid, y0 + 1, x0 + 1);
+    if (sw === null || se === null || nw === null || ne === null) {
+      return null;
+    }
+    const south = sw * (1 - fx) + se * fx;
+    const north = nw * (1 - fx) + ne * fx;
     return south * (1 - fy) + north * fy;
   }
 
-  return { u: blend(field.u), v: blend(field.v) };
+  const u = blend(field.u);
+  const v = blend(field.v);
+  if (u === null || v === null) {
+    return null;
+  }
+  return { u, v };
 }
 
 export function speedColor(kmh: number): Rgb {

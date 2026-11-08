@@ -8,7 +8,8 @@ import { WindControls, type WindHeight } from '../components/wind-controls';
 import { WindOverlay } from '../components/wind-overlay.web';
 import type { SiteRow, SiteRows } from '../format/site-rows';
 import { dateLabel, nepalClock, nepalToday } from '../format/time';
-import { useWindGrid } from '../hooks/use-site-data';
+import { ApiError } from '../api/client';
+import { useWindGrid, type MapView } from '../hooks/use-site-data';
 import { altitude } from '../format/units';
 import { useAppState } from '../state/app-state';
 import { useTheme, type Theme } from '../theme/theme-context';
@@ -22,6 +23,27 @@ const FIT_PADDING = 60;
 const PIN_SIZE = 36;
 const WIND_ATTRIBUTION = ' · Wind: Open-Meteo.com (CC BY 4.0)';
 const SURFACE: WindHeight = 10;
+
+const NOT_FOUND = 404;
+const BBOX_DECIMALS = 2;
+
+function viewOf(map: maplibregl.Map): MapView {
+  const b = map.getBounds();
+  const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]
+    .map((n) => n.toFixed(BBOX_DECIMALS))
+    .join(',');
+  return { bbox, zoom: Math.floor(map.getZoom()) };
+}
+
+function windErrorMessage(error: Error | null): string | null {
+  if (error === null) {
+    return null;
+  }
+  if (error instanceof ApiError && error.status === NOT_FOUND) {
+    return 'No wind data for this area.';
+  }
+  return 'Wind data unavailable. Tap to retry.';
+}
 
 function windTimeLabel(iso: string): string {
   return `${dateLabel(nepalToday(new Date(iso)))} ${nepalClock(iso)}`;
@@ -132,7 +154,8 @@ export function SiteMapView({ rows, onOpen }: { rows: SiteRows; onOpen: (id: str
   const [windOn, setWindOn] = useState(false);
   const [windHeight, setWindHeight] = useState<WindHeight>(SURFACE);
   const [windTime, setWindTime] = useState<string | undefined>(undefined);
-  const wind = useWindGrid(windOn, windHeight, windTime);
+  const [mapView, setMapView] = useState<MapView | null>(null);
+  const wind = useWindGrid(windOn, mapView, windHeight, windTime);
   const windData = wind.data;
   let selected = allRows.find((row) => row.site.id === selectedId);
   if (selected === undefined) {
@@ -152,6 +175,9 @@ export function SiteMapView({ rows, onOpen }: { rows: SiteRows; onOpen: (id: str
     });
     map.current = instance;
     overlay.current = new WindOverlay(instance);
+    const reportView = () => setMapView(viewOf(instance));
+    instance.on('load', reportView);
+    instance.on('moveend', reportView);
     return () => {
       overlay.current?.destroy();
       overlay.current = null;
@@ -223,7 +249,7 @@ export function SiteMapView({ rows, onOpen }: { rows: SiteRows; onOpen: (id: str
           canNext={timeIndex >= 0 && timeIndex < times.length - 1}
           onPrev={() => setWindTime(times[timeIndex - 1])}
           onNext={() => setWindTime(times[timeIndex + 1])}
-          failed={wind.error !== null}
+          errorMessage={windErrorMessage(wind.error)}
           onRetry={wind.reload}
         />
       </View>

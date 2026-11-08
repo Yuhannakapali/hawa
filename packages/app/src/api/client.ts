@@ -30,7 +30,12 @@ export interface ApiClient {
   getSite(id: string): Promise<SiteDetail>;
   getForecast(id: string, query?: { level?: PilotLevel; days?: number }): Promise<ForecastResponse>;
   getStatus(): Promise<StatusResponse>;
-  getWindGrid(query?: { height?: number; time?: string }): Promise<WindGridResponse>;
+  getWindGrid(query: {
+    bbox: string;
+    zoom: number;
+    height?: number;
+    time?: string;
+  }): Promise<WindGridResponse>;
 }
 
 function withQuery(path: string, query: Query = {}): string {

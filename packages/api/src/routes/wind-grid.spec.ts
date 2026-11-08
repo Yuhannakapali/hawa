@@ -1,12 +1,32 @@
 import type { FastifyInstance } from 'fastify';
 import type { DataSource } from 'typeorm';
 import { buildApp } from '../app.js';
-import { insertWindFrame, TEST_MODEL } from '../testing/fixtures.js';
+import { WindTileCache } from '../forecast/wind-tile-cache.js';
+import { TEST_MODEL } from '../testing/fixtures.js';
 import { createTestDb } from '../testing/test-db.js';
-import { WIND_GRID } from '../weather/wind-grid.js';
+import type { GridPoint, WindFrame, WindGridSource } from '../weather/wind-grid.js';
+import { coarseTile } from '../weather/wind-tiles.js';
 
 const NOW = new Date('2026-10-30T04:00:00Z');
 const HOUR_MS = 60 * 60 * 1000;
+const NEPAL_BBOX = '83,27,86,29';
+const FRAME_TIMES = [-2, 0.4, 3].map((h) => new Date(NOW.getTime() + h * HOUR_MS));
+
+class FakeGridSource implements WindGridSource {
+  readonly model = TEST_MODEL;
+  readonly callsPerPoint = 1.4;
+
+  async fetchGrid(points: GridPoint[]): Promise<WindFrame[]> {
+    return FRAME_TIMES.flatMap((timeUtc, i) =>
+      [10, 2000, 3000].map((heightM) => ({
+        timeUtc,
+        heightM,
+        u: points.map(() => 12.36 + i + heightM / 1000),
+        v: points.map(() => -4),
+      })),
+    );
+  }
+}
 
 describe('GET /v1/wind-grid', () => {
   let db: DataSource;
@@ -14,7 +34,12 @@ describe('GET /v1/wind-grid', () => {
 
   beforeEach(async () => {
     db = await createTestDb();
-    app = buildApp({ db, model: TEST_MODEL, now: () => NOW });
+    const windTiles = new WindTileCache(db, new FakeGridSource(), {
+      ttlMs: 3 * HOUR_MS,
+      dailyCallBudget: 100_000,
+      now: () => NOW,
+    });
+    app = buildApp({ db, model: TEST_MODEL, now: () => NOW, windTiles });
   });
 
   afterEach(async () => {
@@ -27,62 +52,50 @@ describe('GET /v1/wind-grid', () => {
     return { status: res.statusCode, body: res.json() };
   }
 
-  const early = new Date(NOW.getTime() - 2 * HOUR_MS);
-  const near = new Date(NOW.getTime() + 0.4 * HOUR_MS);
-  const later = new Date(NOW.getTime() + 3 * HOUR_MS);
+  it('returns the coarse regional grid when zoomed out', async () => {
+    const { status, body } = await get(`/v1/wind-grid?bbox=${NEPAL_BBOX}&zoom=5`);
 
-  async function seed() {
-    await insertWindFrame(db, early, 10, { u: [1.26], v: [2] });
-    await insertWindFrame(db, near, 10, { u: [3.04], v: [-4] });
-    await insertWindFrame(db, later, 10, { u: [5], v: [6] });
-    await insertWindFrame(db, near, 2000, { u: [20], v: [0] });
-  }
-
-  it('returns the frame nearest to now with the grid layout and available times', async () => {
-    await seed();
-
-    const { status, body } = await get('/v1/wind-grid');
-
+    const { key: _key, ...layout } = coarseTile();
     expect(status).toBe(200);
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       heightM: 10,
-      time: near.toISOString(),
-      times: [early, near, later].map((t) => t.toISOString()),
-      grid: WIND_GRID,
-      u: [3],
-      v: [-4],
-      fetchedAt: near.toISOString(),
-      credit: {
-        text: 'Weather data by Open-Meteo.com',
-        url: 'https://open-meteo.com/',
-        license: 'CC BY 4.0',
-      },
+      time: FRAME_TIMES[1]!.toISOString(),
+      times: FRAME_TIMES.map((t) => t.toISOString()),
+      grid: layout,
+      fetchedAt: NOW.toISOString(),
+      credit: { text: 'Weather data by Open-Meteo.com' },
     });
+    expect(body.u).toHaveLength(layout.nLat * layout.nLon);
+    expect(body.u[0]).toBe(13.4);
+    expect(body.v[0]).toBe(-4);
   });
 
-  it('returns the requested time and height', async () => {
-    await seed();
+  it('merges the fine tiles under the view when zoomed in', async () => {
+    const { body } = await get(`/v1/wind-grid?bbox=${NEPAL_BBOX}&zoom=7&height=2000`);
 
-    expect((await get(`/v1/wind-grid?time=${later.toISOString()}`)).body).toMatchObject({
-      time: later.toISOString(),
-      u: [5],
-    });
-    expect((await get('/v1/wind-grid?height=2000')).body).toMatchObject({
-      heightM: 2000,
-      time: near.toISOString(),
-      times: [near.toISOString()],
-      u: [20],
-    });
+    expect(body.grid).toEqual({ latMin: 24, lonMin: 80, step: 0.5, nLat: 17, nLon: 17 });
+    expect(body.heightM).toBe(2000);
+    expect(body.u[0]).toBe(15.4);
   });
 
-  it('rounds wind to one decimal', async () => {
-    await seed();
-    const { body } = await get(`/v1/wind-grid?time=${early.toISOString()}`);
-    expect(body.u).toEqual([1.3]);
+  it('returns the requested time', async () => {
+    const later = FRAME_TIMES[2]!.toISOString();
+    const { body } = await get(`/v1/wind-grid?bbox=${NEPAL_BBOX}&zoom=5&time=${later}`);
+    expect(body.time).toBe(later);
+    expect(body.u[0]).toBe(14.4);
   });
 
-  it('returns 404 when there is no grid yet and 400 for a bad height', async () => {
-    expect((await get('/v1/wind-grid')).status).toBe(404);
-    expect((await get('/v1/wind-grid?height=500')).status).toBe(400);
+  it('returns 404 for a view outside the covered region', async () => {
+    expect((await get('/v1/wind-grid?bbox=0,0,10,10&zoom=7')).status).toBe(404);
+  });
+
+  it.each([
+    'zoom=7',
+    `bbox=${NEPAL_BBOX}`,
+    'bbox=86,27,83,29&zoom=7',
+    'bbox=a,b,c,d&zoom=7',
+    `bbox=${NEPAL_BBOX}&zoom=7&height=500`,
+  ])('rejects %s', async (query) => {
+    expect((await get(`/v1/wind-grid?${query}`)).status).toBe(400);
   });
 });

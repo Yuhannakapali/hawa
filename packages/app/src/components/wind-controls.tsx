@@ -50,24 +50,16 @@ function Legend() {
   return (
     <View style={styles.legend}>
       <View style={styles.legendBar}>
-        {WIND_SPEED_STOPS.map(stop => (
+        {WIND_SPEED_STOPS.map((stop) => (
           <View
             key={stop.kmh}
-            style={[
-              styles.legendSegment,
-              { backgroundColor: `rgb(${stop.rgb.join(',')})` },
-            ]}
+            style={[styles.legendSegment, { backgroundColor: `rgb(${stop.rgb.join(',')})` }]}
           />
         ))}
       </View>
       <View style={styles.legendLabels}>
-        {WIND_SPEED_STOPS.map(stop => (
-          <Txt
-            key={stop.kmh}
-            variant="caption"
-            color={c.ink2}
-            style={styles.legendLabel}
-          >
+        {WIND_SPEED_STOPS.map((stop) => (
+          <Txt key={stop.kmh} variant="caption" color={c.ink2} style={styles.legendLabel}>
             {speed(stop.kmh, settings.speedUnit)}
           </Txt>
         ))}
@@ -89,7 +81,7 @@ export function WindControls({
   canNext,
   onPrev,
   onNext,
-  failed,
+  errorMessage,
   onRetry,
 }: {
   enabled: boolean;
@@ -101,14 +93,12 @@ export function WindControls({
   canNext: boolean;
   onPrev: () => void;
   onNext: () => void;
-  failed: boolean;
+  errorMessage: string | null;
   onRetry: () => void;
 }) {
   const { c } = useTheme();
   return (
-    <View
-      style={[styles.card, { backgroundColor: c.surface, borderColor: c.line }]}
-    >
+    <View style={[styles.card, { backgroundColor: c.surface, borderColor: c.line }]}>
       <Pressable
         accessibilityRole="switch"
         accessibilityState={{ checked: enabled }}
@@ -123,43 +113,25 @@ export function WindControls({
           <Segmented
             options={HEIGHT_OPTIONS}
             value={`${height}`}
-            onChange={value => onHeight(Number(value) as WindHeight)}
+            onChange={(value) => onHeight(Number(value) as WindHeight)}
             height={36}
             minWidth={0}
             stretch
           />
-          {failed && (
-            <Pressable
-              accessibilityRole="button"
-              onPress={onRetry}
-              style={styles.error}
-            >
-              <Txt
-                variant="caption"
-                color={c.rating.red.ink}
-                style={styles.semibold}
-              >
-                Wind data unavailable. Tap to retry.
+          {errorMessage !== null && (
+            <Pressable accessibilityRole="button" onPress={onRetry} style={styles.error}>
+              <Txt variant="caption" color={c.rating.red.ink} style={styles.semibold}>
+                {errorMessage}
               </Txt>
             </Pressable>
           )}
-          {!failed && (
+          {errorMessage === null && (
             <View style={styles.time}>
-              <StepButton
-                label="Earlier hour"
-                glyph="‹"
-                disabled={!canPrev}
-                onPress={onPrev}
-              />
+              <StepButton label="Earlier hour" glyph="‹" disabled={!canPrev} onPress={onPrev} />
               <Txt variant="data" style={styles.timeLabel}>
                 {timeLabel ?? '…'}
               </Txt>
-              <StepButton
-                label="Later hour"
-                glyph="›"
-                disabled={!canNext}
-                onPress={onNext}
-              />
+              <StepButton label="Later hour" glyph="›" disabled={!canNext} onPress={onNext} />
             </View>
           )}
           <Legend />

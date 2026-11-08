@@ -8,7 +8,7 @@ import {
   type Rating,
 } from '@hawa/scoring';
 import type { CapeLevel, DayView, HourView } from '@hawa/contracts';
-import type { ForecastHour } from '../db/entities.js';
+import type { ForecastHour } from '../db/entities/forecast-hour.entity.js';
 import { addDays, toNepalLocal } from '../time/nepal-time.js';
 
 const FIRST_LOCAL_HOUR = 6;

@@ -93,14 +93,17 @@ export interface WindGridLayout {
   nLon: number;
 }
 
-/** Wind components in km/h, u towards east and v towards north, row by row from the south-west corner. */
+/**
+ * Wind components in km/h, u towards east and v towards north, row by row from the south-west corner.
+ * A point is null when its tile has not been fetched yet.
+ */
 export interface WindGridResponse {
   heightM: number;
   time: string;
   times: string[];
   grid: WindGridLayout;
-  u: number[];
-  v: number[];
+  u: (number | null)[];
+  v: (number | null)[];
   fetchedAt: string;
   credit: Credit;
 }

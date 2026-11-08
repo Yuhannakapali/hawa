@@ -1,9 +1,5 @@
 import type { WindGridLayout } from '@hawa/contracts';
-import {
-  sampleWind,
-  speedColor,
-  WIND_SPEED_STOPS,
-} from '../src/format/wind-field';
+import { sampleWind, speedColor, WIND_SPEED_STOPS } from '../src/format/wind-field';
 
 const grid: WindGridLayout = {
   latMin: 27,
@@ -24,6 +20,12 @@ describe('sampleWind', () => {
     const wind = sampleWind(field, 27.5, 84.5);
     expect(wind?.u).toBeCloseTo(15);
     expect(wind?.v).toBeCloseTo(-5);
+  });
+
+  it('is null next to a point without data', () => {
+    const partial = { grid, u: [0, 10, null, 30], v: [0, 0, null, -10] };
+    expect(sampleWind(partial, 27.5, 84.5)).toBeNull();
+    expect(sampleWind(partial, 27, 85)).toBeNull();
   });
 
   it('is null outside the grid', () => {

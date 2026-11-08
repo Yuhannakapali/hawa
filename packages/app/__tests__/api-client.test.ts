@@ -37,14 +37,16 @@ describe('createApiClient', () => {
 });
 
 describe('getWindGrid', () => {
-  it('passes the height and time', async () => {
+  it('passes the view, height and time', async () => {
     const fetchFn = fetchReturning({});
     await createApiClient('', fetchFn).getWindGrid({
+      bbox: '83,27,86,29',
+      zoom: 7,
       height: 2000,
       time: '2026-10-30T05:15:00.000Z',
     });
     expect(fetchFn.mock.calls[0]![0]).toBe(
-      '/v1/wind-grid?height=2000&time=2026-10-30T05%3A15%3A00.000Z',
+      '/v1/wind-grid?bbox=83%2C27%2C86%2C29&zoom=7&height=2000&time=2026-10-30T05%3A15%3A00.000Z',
     );
   });
 });

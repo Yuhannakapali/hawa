@@ -1,5 +1,5 @@
 import type { DataSource } from 'typeorm';
-import { ForecastHour } from '../db/entities.js';
+import { ForecastHour } from '../db/entities/forecast-hour.entity.js';
 import { calmWeather, insertForecastHour, insertSite, TEST_MODEL } from '../testing/fixtures.js';
 import { createTestDb } from '../testing/test-db.js';
 import type { HourlyWeather, WeatherSource } from '../weather/types.js';

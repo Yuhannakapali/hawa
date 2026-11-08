@@ -9,7 +9,10 @@
   "scripts": {
     "test": "nx run-many -t test",
     "typecheck": "nx run-many -t typecheck",
-    "build": "nx run-many -t build"
+    "build": "nx run-many -t build",
+    "dev": "DATABASE_URL=${DATABASE_URL:-postgres://localhost/hawa} nx run-many -t dev --parallel --output-style=stream",
+    "dev:api": "DATABASE_URL=${DATABASE_URL:-postgres://localhost/hawa} npm run dev -w @hawa/api",
+    "dev:web": "npm run dev -w @hawa/app"
   },
   "devDependencies": {
     "@nx/js": "24.0.2",

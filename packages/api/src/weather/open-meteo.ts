@@ -9,6 +9,10 @@ import {
 } from './wind-grid.js';
 
 export const PRESSURE_LEVELS_HPA = [900, 850, 800, 700, 600] as const;
+// The map only needs 2000 m and 3000 m, so the grid skips 900 hPa (~1000 m) to cost less per point.
+const GRID_PRESSURE_LEVELS_HPA = [850, 800, 700, 600] as const;
+// Open-Meteo counts every 10 hourly variables as one call.
+const VARIABLES_PER_CALL = 10;
 
 const GRID_SURFACE_VARIABLES = ['wind_speed_10m', 'wind_direction_10m'];
 
@@ -43,8 +47,8 @@ interface LevelWind {
   v: number;
 }
 
-function levelVariables(): string[] {
-  return PRESSURE_LEVELS_HPA.flatMap((hpa) => [
+function levelVariables(levels: readonly number[] = PRESSURE_LEVELS_HPA): string[] {
+  return levels.flatMap((hpa) => [
     `wind_speed_${hpa}hPa`,
     `wind_direction_${hpa}hPa`,
     `geopotential_height_${hpa}hPa`,
@@ -98,11 +102,16 @@ class HourReader {
   }
 }
 
-function readLevels(read: HourReader): LevelWind[] {
-  return PRESSURE_LEVELS_HPA.map((hpa) => ({
-    heightM: read.get(`geopotential_height_${hpa}hPa`),
-    ...toComponents(read.get(`wind_speed_${hpa}hPa`), read.get(`wind_direction_${hpa}hPa`)),
-  })).sort((a, b) => a.heightM - b.heightM);
+function readLevels(
+  read: HourReader,
+  levels: readonly number[] = PRESSURE_LEVELS_HPA,
+): LevelWind[] {
+  return levels
+    .map((hpa) => ({
+      heightM: read.get(`geopotential_height_${hpa}hPa`),
+      ...toComponents(read.get(`wind_speed_${hpa}hPa`), read.get(`wind_direction_${hpa}hPa`)),
+    }))
+    .sort((a, b) => a.heightM - b.heightM);
 }
 
 function utcTime(body: OpenMeteoResponse, index: number): Date {
@@ -188,12 +197,15 @@ function windAtGridHeight(read: HourReader, heightM: number): { u: number; v: nu
   if (heightM === SURFACE_HEIGHT_M) {
     return toComponents(read.get('wind_speed_10m'), read.get('wind_direction_10m'));
   }
-  const wind = windAtAltitude(readLevels(read), heightM);
+  const wind = windAtAltitude(readLevels(read, GRID_PRESSURE_LEVELS_HPA), heightM);
   return toComponents(wind.speedKmh, wind.dirDeg);
 }
 
+const GRID_VARIABLES = [...GRID_SURFACE_VARIABLES, ...levelVariables(GRID_PRESSURE_LEVELS_HPA)];
+
 export class OpenMeteoWindGridSource implements WindGridSource {
   readonly model = OPEN_METEO_MODEL;
+  readonly callsPerPoint = Math.max(1, GRID_VARIABLES.length / VARIABLES_PER_CALL);
   private readonly client: OpenMeteoClient;
 
   constructor(options: OpenMeteoOptions) {
@@ -203,7 +215,7 @@ export class OpenMeteoWindGridSource implements WindGridSource {
   async fetchGrid(points: GridPoint[], days: number): Promise<WindFrame[]> {
     const response = await this.client.get<OpenMeteoResponse | OpenMeteoResponse[]>(
       points,
-      [...GRID_SURFACE_VARIABLES, ...levelVariables()],
+      GRID_VARIABLES,
       days,
     );
     let locations: OpenMeteoResponse[] = [];

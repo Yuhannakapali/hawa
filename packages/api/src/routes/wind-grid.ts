@@ -1,49 +1,51 @@
 import type { WindGridResponse } from '@hawa/contracts';
-import type { FastifyInstance } from 'fastify';
-import type { DataSource } from 'typeorm';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 import { OPEN_METEO_CREDIT } from '../credit.js';
-import { WindGridFrame } from '../db/entities.js';
-import { SURFACE_HEIGHT_M, WIND_GRID, WIND_GRID_HEIGHTS_M } from '../weather/wind-grid.js';
+import type { WindTileCache } from '../forecast/wind-tile-cache.js';
+import { SURFACE_HEIGHT_M, WIND_GRID_HEIGHTS_M } from '../weather/wind-grid.js';
+import { tilesForView, type Bbox } from '../weather/wind-tiles.js';
 
 const DECIMALS_FACTOR = 10;
+const MAX_ZOOM = 22;
+const NUMBER = '-?\\d+(\\.\\d+)?';
+const BBOX_PATTERN = `^${NUMBER},${NUMBER},${NUMBER},${NUMBER}$`;
 
 export interface WindGridRoutesOptions {
-  db: DataSource;
-  model: string;
-  now: () => Date;
+  windTiles: WindTileCache;
 }
 
-function round(values: number[]): number[] {
-  return values.map((value) => Math.round(value * DECIMALS_FACTOR) / DECIMALS_FACTOR);
-}
-
-function distance(a: Date, b: Date): number {
-  return Math.abs(a.getTime() - b.getTime());
-}
-
-function nearest(times: Date[], target: Date): Date {
-  let best = times[0]!;
-  for (const time of times) {
-    if (distance(time, target) < distance(best, target)) {
-      best = time;
+function round(values: (number | null)[]): (number | null)[] {
+  return values.map((value) => {
+    if (value === null) {
+      return null;
     }
-  }
-  return best;
+    return Math.round(value * DECIMALS_FACTOR) / DECIMALS_FACTOR;
+  });
 }
 
-export async function windGridRoutes(
-  app: FastifyInstance,
-  { db, model, now }: WindGridRoutesOptions,
-) {
-  const frames = db.getRepository(WindGridFrame);
+function parseBbox(raw: string): Bbox | null {
+  const [west, south, east, north] = raw.split(',').map(Number) as [number, number, number, number];
+  if (west >= east || south >= north) {
+    return null;
+  }
+  return { west, south, east, north };
+}
 
-  app.get<{ Querystring: { height: number; time?: string } }>(
+function notFound(reply: FastifyReply, message: string) {
+  return reply.code(404).send({ statusCode: 404, error: 'Not Found', message });
+}
+
+export async function windGridRoutes(app: FastifyInstance, { windTiles }: WindGridRoutesOptions) {
+  app.get<{ Querystring: { bbox: string; zoom: number; height: number; time?: string } }>(
     '/v1/wind-grid',
     {
       schema: {
         querystring: {
           type: 'object',
+          required: ['bbox', 'zoom'],
           properties: {
+            bbox: { type: 'string', pattern: BBOX_PATTERN },
+            zoom: { type: 'number', minimum: 0, maximum: MAX_ZOOM },
             height: { type: 'integer', enum: [...WIND_GRID_HEIGHTS_M], default: SURFACE_HEIGHT_M },
             time: { type: 'string', format: 'date-time' },
           },
@@ -51,31 +53,35 @@ export async function windGridRoutes(
       },
     },
     async (request, reply) => {
-      const { height, time } = request.query;
-      const available = await frames.find({
-        select: { timeUtc: true },
-        where: { heightM: height, model },
-        order: { timeUtc: 'ASC' },
-      });
-      if (available.length === 0) {
-        return reply
-          .code(404)
-          .send({ statusCode: 404, error: 'Not Found', message: 'No wind grid yet' });
+      const { bbox, zoom, height, time } = request.query;
+      const view = parseBbox(bbox);
+      if (view === null) {
+        return reply.code(400).send({
+          statusCode: 400,
+          error: 'Bad Request',
+          message: 'bbox must be west,south,east,north with west < east and south < north',
+        });
+      }
+      const tiles = tilesForView(view, zoom);
+      if (tiles.length === 0) {
+        return notFound(reply, 'No wind data for this area');
       }
 
-      let target = now();
+      await windTiles.ensure(tiles);
+      let target: Date | undefined;
       if (time !== undefined) {
         target = new Date(time);
       }
-      const times = available.map((frame) => frame.timeUtc);
-      const chosen = nearest(times, target);
-      const frame = await frames.findOneByOrFail({ timeUtc: chosen, heightM: height, model });
+      const frame = await windTiles.frame(tiles, height, target);
+      if (frame === null) {
+        return notFound(reply, 'No wind data yet');
+      }
 
       const response: WindGridResponse = {
         heightM: height,
-        time: chosen.toISOString(),
-        times: times.map((t) => t.toISOString()),
-        grid: WIND_GRID,
+        time: frame.time.toISOString(),
+        times: frame.times.map((t) => t.toISOString()),
+        grid: frame.grid,
         u: round(frame.u),
         v: round(frame.v),
         fetchedAt: frame.fetchedAt.toISOString(),

@@ -41,12 +41,24 @@ export function useStatus() {
   return useRequest(load);
 }
 
-export function useWindGrid(enabled: boolean, height: number, time: string | undefined) {
+export interface MapView {
+  bbox: string;
+  zoom: number;
+}
+
+export function useWindGrid(
+  enabled: boolean,
+  view: MapView | null,
+  height: number,
+  time: string | undefined,
+) {
+  const bbox = view?.bbox;
+  const zoom = view?.zoom;
   const load = useCallback(async () => {
-    if (!enabled) {
+    if (!enabled || bbox === undefined || zoom === undefined) {
       return null;
     }
-    return api.getWindGrid({ height, time });
-  }, [enabled, height, time]);
+    return api.getWindGrid({ bbox, zoom, height, time });
+  }, [enabled, bbox, zoom, height, time]);
   return useRequest(load);
 }

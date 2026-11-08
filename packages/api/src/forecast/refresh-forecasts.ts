@@ -1,6 +1,7 @@
 import { scoreHour, type HourConditions } from '@hawa/scoring';
 import { LessThan, type DataSource } from 'typeorm';
-import { ForecastHour, Site } from '../db/entities.js';
+import { ForecastHour } from '../db/entities/forecast-hour.entity.js';
+import { Site } from '../db/entities/site.entity.js';
 import { toNepalLocal } from '../time/nepal-time.js';
 import type { HourlyWeather, WeatherSource } from '../weather/types.js';
 

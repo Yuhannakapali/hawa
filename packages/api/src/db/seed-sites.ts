@@ -1,4 +1,4 @@
-import type { Site } from './entities.js';
+import type { Site } from './entities/site.entity.js';
 
 export type SeedSite = Pick<
   Site,

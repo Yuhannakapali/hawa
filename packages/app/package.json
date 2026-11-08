@@ -10,7 +10,8 @@
     "test": "jest",
     "web": "vite --config vite.web.config.mts",
     "build:web": "vite build --config vite.web.config.mts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev": "vite --config vite.web.config.mts"
   },
   "dependencies": {
     "@hawa/contracts": "*",

@@ -1,6 +1,6 @@
 import { loadConfig } from '../config.js';
 import { createDataSource } from './data-source.js';
-import { Site } from './entities.js';
+import { Site } from './entities/site.entity.js';
 import { SEED_SITES } from './seed-sites.js';
 
 const db = createDataSource(loadConfig().databaseUrl);
