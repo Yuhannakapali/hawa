@@ -1,0 +1,14 @@
+{
+  "name": "Hawa: paragliding forecast for Nepal",
+  "short_name": "Hawa",
+  "description": "Which launch sites in Nepal are flyable, hour by hour.",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#08090A",
+  "theme_color": "#08090A",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

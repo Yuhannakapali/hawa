@@ -95,6 +95,23 @@ API_URL=http://192.168.1.10:3000 npm run web -w @hawa/app
 | `HOST` | no | `0.0.0.0` | Address the API listens on |
 | `OPEN_METEO_URL` | no | `https://api.open-meteo.com/v1/forecast` | Open-Meteo forecast endpoint (change it for a self-hosted server) |
 | `WIND_DAILY_CALL_BUDGET` | no | `7000` | Most Open-Meteo calls the wind map layer may use in any 24 hours; after that the API serves cached wind only |
+| `VAPID_PUBLIC_KEY` | no | — | Web push public key. Web alerts are off unless all three `VAPID_*` variables are set |
+| `VAPID_PRIVATE_KEY` | no | — | Web push private key. Keep it secret |
+| `VAPID_SUBJECT` | no | — | Contact for push services, e.g. `mailto:you@example.com` |
+| `FIREBASE_SERVICE_ACCOUNT_FILE` | no | — | Path to the Firebase service account JSON. Android and iOS alerts are off without it |
+
+Create the web push keys once with `npx web-push generate-vapid-keys`. For iOS, upload your APNs key in the
+Firebase console; Firebase then delivers to iPhones too.
+
+### Evening alerts
+
+Every 15 minutes the API checks for devices whose alert time (18:00–21:00 Nepal time) has just passed. If a
+site the pilot marked for alerts is green tomorrow for their level, it sends one push and does not send
+again that day. A device whose push subscription has expired is removed.
+
+Push delivery sits behind `PushChannel` in `packages/api/src/push/push-sender.ts`: `WebPushChannel` for
+browsers, `FcmChannel` for Android and iOS. To change provider, write another channel and pass it to
+`createPushSender` in `main.ts`; nothing else changes.
 
 ## Endpoints
 
@@ -105,6 +122,9 @@ API_URL=http://192.168.1.10:3000 npm run web -w @hawa/app
 | GET | `/v1/sites/{id}/forecast?days=3&level=student` | Hourly score 06:00–18:00 Nepal time, wind by height, thermals |
 | GET | `/v1/wind-grid?bbox=w,s,e,n&zoom=7&height=10&time=<ISO time>` | Wind for the visible map area. `bbox` and `zoom` are required; `height` is 10, 2000 or 3000; nearest frame to `time`, or now |
 | GET | `/v1/status` | Time of the last forecast update, whether it is stale, data credit |
+| GET | `/v1/push/config` | `{ webPushPublicKey }`, or `null` when web push is not configured |
+| PUT | `/v1/devices/{id}` | Registers or updates a device for alerts. `id` is a UUID the app creates. Body: `platform` (`web`, `android`, `ios`), `token` (FCM token, or the JSON web push subscription; 1–4096 chars), `level`, `alertTime` (`18:00`, `19:00`, `20:00`, `21:00`), `alertSiteIds` (up to 100 site UUIDs). Returns the device without its token. A token already used by another device moves to this one |
+| DELETE | `/v1/devices/{id}` | Stops alerts for the device. Always `204` |
 
 `level` is `student` or `pilot`.
 

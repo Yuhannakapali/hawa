@@ -113,3 +113,37 @@ export interface StatusResponse {
   stale: boolean;
   credit: Credit;
 }
+
+export type DevicePlatform = 'web' | 'android' | 'ios';
+
+/** Evening alert times in Nepal time, HH:MM. */
+export const ALERT_TIMES = ['18:00', '19:00', '20:00', '21:00'] as const;
+export type AlertTime = (typeof ALERT_TIMES)[number];
+
+/**
+ * Registers or updates a device for evening alerts. `token` is the FCM registration token on
+ * Android and iOS, and the JSON-encoded PushSubscription on the web.
+ */
+export interface DeviceRequest {
+  platform: DevicePlatform;
+  token: string;
+  level: PilotLevel;
+  alertTime: AlertTime;
+  /** Favorite sites with alerts turned on. An empty list stops alerts. */
+  alertSiteIds: string[];
+}
+
+export interface DeviceResponse {
+  id: string;
+  platform: DevicePlatform;
+  level: PilotLevel;
+  alertTime: AlertTime;
+  alertSiteIds: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PushConfigResponse {
+  /** VAPID public key for web push, or null when web push is not configured. */
+  webPushPublicKey: string | null;
+}

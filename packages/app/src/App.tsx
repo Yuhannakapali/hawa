@@ -5,10 +5,12 @@ import {
   SafeAreaView,
 } from 'react-native-safe-area-context';
 import { RootNavigator } from './navigation/root-navigator';
+import { useDeviceSync } from './push/use-device-sync';
 import { AppStateProvider } from './state/app-state';
 import { useTheme } from './theme/theme-context';
 
 function ThemedShell() {
+  useDeviceSync();
   const { scheme, c } = useTheme();
   let barStyle: 'light-content' | 'dark-content' = 'dark-content';
   if (scheme === 'dark') {

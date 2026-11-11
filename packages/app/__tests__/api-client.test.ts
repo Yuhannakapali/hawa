@@ -1,7 +1,9 @@
 import { ApiError, createApiClient } from '../src/api/client';
 
 function fetchReturning(body: unknown, status = 200) {
-  return jest.fn(async (_url: string) => new Response(JSON.stringify(body), { status }));
+  return jest.fn(
+    async (_url: string) => new Response(JSON.stringify(body), { status }),
+  );
 }
 
 describe('createApiClient', () => {
@@ -33,6 +35,56 @@ describe('createApiClient', () => {
     const api = createApiClient('', fetchReturning({ message: 'nope' }, 404));
     await expect(api.getSite('x')).rejects.toBeInstanceOf(ApiError);
     await expect(api.getSite('x')).rejects.toMatchObject({ status: 404 });
+  });
+});
+
+describe('device registration', () => {
+  const DEVICE_ID = '7b0a1c2e-3f4d-4a5b-8c6d-9e0f1a2b3c4d';
+
+  it('puts the device as JSON', async () => {
+    const fetchFn = fetchReturning({ id: DEVICE_ID });
+    const body = {
+      platform: 'web' as const,
+      token: 'tok',
+      level: 'student' as const,
+      alertTime: '19:00' as const,
+      alertSiteIds: [],
+    };
+
+    await createApiClient('', fetchFn).putDevice(DEVICE_ID, body);
+
+    const [url, init] = fetchFn.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(url).toBe(`/v1/devices/${DEVICE_ID}`);
+    expect(init.method).toBe('PUT');
+    expect(JSON.parse(init.body as string)).toEqual(body);
+  });
+
+  it('deletes the device and accepts an empty 204 reply', async () => {
+    const fetchFn = jest.fn(
+      async (_url: string) => new Response(null, { status: 204 }),
+    );
+
+    await createApiClient('', fetchFn).deleteDevice(DEVICE_ID);
+
+    const [url, init] = fetchFn.mock.calls[0] as unknown as [
+      string,
+      RequestInit,
+    ];
+    expect(url).toBe(`/v1/devices/${DEVICE_ID}`);
+    expect(init.method).toBe('DELETE');
+  });
+
+  it('reads the push config', async () => {
+    const fetchFn = fetchReturning({ webPushPublicKey: 'key' });
+    await expect(createApiClient('', fetchFn).getPushConfig()).resolves.toEqual(
+      {
+        webPushPublicKey: 'key',
+      },
+    );
+    expect(fetchFn.mock.calls[0]![0]).toBe('/v1/push/config');
   });
 });
 

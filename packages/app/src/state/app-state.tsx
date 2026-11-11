@@ -1,4 +1,4 @@
-import type { PilotLevel } from '@hawa/contracts';
+import { ALERT_TIMES, type AlertTime, type PilotLevel } from '@hawa/contracts';
 import {
   createContext,
   useCallback,
@@ -13,8 +13,7 @@ import { readJson, writeJson } from '../storage/kv-store';
 
 export type ThemePref = 'system' | 'light' | 'dark';
 
-export const ALERT_TIMES = ['18:00', '19:00', '20:00', '21:00'] as const;
-export type AlertTime = (typeof ALERT_TIMES)[number];
+export { ALERT_TIMES, type AlertTime };
 
 export interface Settings {
   onboarded: boolean;
@@ -80,24 +79,27 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateSettings = useCallback((patch: Partial<Settings>) => {
-    setSettings((current) => {
+    setSettings(current => {
       const next = { ...current, ...patch };
       writeJson(SETTINGS_KEY, next);
       return next;
     });
   }, []);
 
-  const saveFavorites = useCallback((update: (current: Favorites) => Favorites) => {
-    setFavorites((current) => {
-      const next = update(current);
-      writeJson(FAVORITES_KEY, next);
-      return next;
-    });
-  }, []);
+  const saveFavorites = useCallback(
+    (update: (current: Favorites) => Favorites) => {
+      setFavorites(current => {
+        const next = update(current);
+        writeJson(FAVORITES_KEY, next);
+        return next;
+      });
+    },
+    [],
+  );
 
   const toggleFavorite = useCallback(
     (siteId: string) =>
-      saveFavorites((current) => {
+      saveFavorites(current => {
         if (current[siteId]) {
           const { [siteId]: _removed, ...rest } = current;
           return rest;
@@ -109,7 +111,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const setSiteAlert = useCallback(
     (siteId: string, alertsOn: boolean) =>
-      saveFavorites((current) => ({ ...current, [siteId]: { alertsOn } })),
+      saveFavorites(current => ({ ...current, [siteId]: { alertsOn } })),
     [saveFavorites],
   );
 
@@ -124,7 +126,11 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     }),
     [ready, settings, favorites, updateSettings, toggleFavorite, setSiteAlert],
   );
-  return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;
+  return (
+    <AppStateContext.Provider value={value}>
+      {children}
+    </AppStateContext.Provider>
+  );
 }
 
 export function useAppState(): AppState {
