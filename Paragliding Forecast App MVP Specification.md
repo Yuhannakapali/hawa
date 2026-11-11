@@ -314,3 +314,19 @@ The app does not launch until instructors approve the score limits and test pilo
 1. Version 2: Skew-T chart, model comparison, webcams and live weather stations.
 2. Version 3: variometer, flight log with IGC files, live tracking, and SOS.
 3. Version 4: pilot reports, site guides for other countries, Nepali language.
+
+**Potential features: pilot-sourced launch sites (not scheduled)**
+
+These would let pilots tell us about places they fly from that the developers don't know about. Some of those places may be risky or not proper flying sites, so nothing a pilot sends is shown publicly until an admin approves it. Some of this brings forward parts of versions 3 and 4.
+
+| Feature | What it does |
+| --- | --- |
+| Log a flight | The pilot taps "I flew from here" and the app records the launch at their GPS location. |
+| Import a flight track | The pilot uploads an IGC file. The first point of the track is taken as the launch point. |
+| Anonymous pilot ID | Each install gets a random ID, so the app can count different pilots without user accounts. |
+| Match launches to sites | A launch within about 1 km of a listed site counts toward that site. Any other launch is recorded as an unlisted spot. |
+| Suggest a new site | The pilot sends a name, location, launch height, wind directions and notes. It stays hidden until an admin approves it. |
+| Admin: where people fly | Every listed site and unlisted spot, with the number of different pilots, total launches, and first and last launch dates. Shows popular and possibly risky spots. |
+| Admin: review suggestions | Approve or reject each suggested site, with the number of pilots who have already launched near it. An approved suggestion becomes a site. |
+| Admin access | Protected by an admin token at first, with an admin screen later. |
+| Site popularity (optional) | Shows "N pilots have flown here" on listed sites only, never on unlisted spots. |
